@@ -12,7 +12,7 @@ const credentialSchema = new mongoose.Schema({
 
 const Credential = mongoose.models.Credential || mongoose.model("Credential", credentialSchema);
 
-// 🔑 AAPKI LIVE GROQ API KEY INJECTED
+// 🔑 GROQ API KEY WITH CORRECT CASE SENSITIVITY
 const groqKey = "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"; 
 
 // HTML settings portal interface
@@ -155,7 +155,7 @@ router.use((req, res, next) => {
                 <button onclick="toggleUniChat()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; font-size:1.1rem;">×</button>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Hello! I am powered by Groq Llama-3 AI. 🚀 Ask me any query!</div>
+                <div class="chat-msg bot">Hello! I am powered by Groq Llama AI. 🚀 Ask me any query!</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -223,14 +223,20 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 HIGH-SPEED GROQ LLAMA 3 ROUTING ARCHITECTURE
+// 🎯 HIGH-SPEED GROQ LLAMA 3.1 ROUTING WITH UPDATED 2026 SYSTEM CONTEXT
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question } = req.body;
     
     const postData = JSON.stringify({
-     model: "llama-3.1-8b-instant",
-      
+      model: "llama-3.1-8b-instant",
+      messages: [
+        { 
+          role: "system", 
+          content: "You are a helpful university website chatbot assistant for SITM College. The present current year is 2026. Acknowledge that the year is 2026 if asked about modern data or net worths. Explain that you don't have active live web search for real-time market updates of this exact moment, but state that the year is 2026 and provide the context politely." 
+        },
+        { role: "user", content: question }
+      ]
     });
 
     const options = {
@@ -241,14 +247,6 @@ router.post("/api/chat-ai", async (req, res) => {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + groqKey,
         'Content-Length': Buffer.byteLength(postData)
-        messages: [
-  { 
-    role: "system", 
-    content: "You are a helpful university website chatbot assistant for SITM College. The current year is 2026. If someone asks about 2026 data or net worth, acknowledge that the current year is 2026, state that you don't have real-time live web-browsing capabilities for exact current figures, and provide the last known estimates or general context smartly." 
-  },
-  { role: "user", content: question }
-]
-    
       }
     };
 
