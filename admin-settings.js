@@ -351,7 +351,7 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-    // 🤖 INTENT 3: STANDARD AI CONVERSATION IF NO DATABASE TRIGGER DETECTED
+        // 🤖 INTENT 3: STANDARD AI CONVERSATION IF NO DATABASE TRIGGER DETECTED
     let messagePayload = [
       { 
         role: "system", 
@@ -360,7 +360,9 @@ router.post("/api/chat-ai", async (req, res) => {
     ];
 
     if (history && Array.isArray(history)) {
-      history.forEach(msg => { if(msg.role && msg.content) messagePayload.push({ role: msg.role, content: msg.content }); });
+      history.forEach(msg => { 
+        if(msg.role && msg.content) messagePayload.push({ role: msg.role, content: msg.content }); 
+      });
     }
     messagePayload.push({ role: "user", content: question });
 
@@ -383,9 +385,24 @@ router.post("/api/chat-ai", async (req, res) => {
       apiRes.on('end', () => {
         try {
           const data = JSON.parse(responseBody);
-          res.status(200).json({ reply: data.choices[0].message.content });
-        } catch (e) { res.status(200).json({ reply: "JSON transit mismatch." }); }
+          let extractedText = "";
+          
+          if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+            extractedText = data.choices[0].message.content;
+          } else if (data.error) {
+            extractedText = "Engine Error: " + data.error.message;
+          } else {
+            extractedText = "Response matrix shifting error.";
+          }
+          res.status(200).json({ reply: extractedText });
+        } catch (e) { 
+          res.status(200).json({ reply: "JSON transit mismatch." }); 
+        }
       });
+    });
+
+    apiReq.on('error', (e) => {
+      res.status(500).json({ reply: "Handshake transmission failure: " + e.message });
     });
 
     apiReq.write(postData);
@@ -397,3 +414,4 @@ router.post("/api/chat-ai", async (req, res) => {
 });
 
 module.exports = router;
+
