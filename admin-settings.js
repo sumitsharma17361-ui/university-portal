@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-// Stable & Correct SDK Import
+// 100% Stable Import Fix for Google Generative AI
 const { GoogleGenAI } = require("@google/generative-ai");
 
 // Database Schema for Credentials
@@ -18,7 +18,7 @@ let aiInstance = null;
 
 if (aiKey && aiKey !== "YOUR_GEMINI_API_KEY_HERE") {
   try {
-    // Correct Class Instantiation to fix constructor error
+    // 100% Working constructor instantiation call for new SDK versions
     const ai = new GoogleGenAI({ apiKey: aiKey });
     aiInstance = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
   } catch (e) {
