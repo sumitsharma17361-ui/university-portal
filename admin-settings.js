@@ -3,12 +3,21 @@ const mongoose = require("mongoose");
 const router = express.Router();
 const https = require("https");
 
-const credentialSchema = new mongoose.Schema({
-  role: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
-});
-
-const Credential = mongoose.models.Credential || mongoose.model("Credential", credentialSchema);
+// Re-using the exact Student model compiled in server.js
+const Student = mongoose.models.Student || mongoose.model("Student", new mongoose.Schema({
+  roll: { type: String, required: true, unique: true },
+  dob: { type: String, required: true },
+  name: { type: String, required: true },
+  course: { type: String, default: "B.Tech CSE" },
+  subjects: {
+    java: Number,
+    rProg: Number,
+    os: Number,
+    coa: Number,
+    unixLinux: Number
+  },
+  uploadedAt: { type: Date, default: Date.now }
+}));
 
 // 🔑 GROQ API KEY
 const groqKey = "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"; 
@@ -99,7 +108,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic UI Injector Engine (With LocalStorage Memory + Clear Session Button)
+// Dynamic UI Injector Engine
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -149,14 +158,14 @@ router.use((req, res, next) => {
             <button id="uniChatLauncher" onclick="toggleUniChat()">💬</button>
             <div id="uniChatBox">
               <div class="chat-header">
-                <span>🏫 SITM Campus AI Assistant</span>
+                <span>🏫 SITM Live DB Assistant</span>
                 <div class="chat-header-actions">
                   <button title="Clear Conversation" class="chat-action-btn" onclick="clearUniChatMemory()">🗑️</button>
                   <button class="chat-action-btn" onclick="toggleUniChat()" style="font-weight:bold;">×</button>
                 </div>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Hello! I am your SITM Campus AI Assistant. 🚀 Ask me any query!</div>
+                <div class="chat-msg bot">Hello! I am your SITM Database Aware Assistant. 🚀 Students can ask for marks by roll number. Teachers can update marks via secret pins!</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -173,7 +182,6 @@ router.use((req, res, next) => {
             window.addEventListener('DOMContentLoaded', () => {
               const logs = document.getElementById('uniChatLogs');
               if(currentChatHistory.length > 0) {
-                // Clear the default template welcome message if older logs are active
                 logs.innerHTML = '';
                 currentChatHistory.forEach(msg => {
                   const type = msg.role === 'user' ? 'user' : 'bot';
@@ -198,13 +206,11 @@ router.use((req, res, next) => {
 
             function handleChatKey(e) { if(e.key === 'Enter') sendUniChatMessage(); }
             
-            // 🗑️ FUNCTION TO WIPE STORAGE AND RESET SCREEN
             function clearUniChatMemory() {
               if(confirm("Kya aap poori chat history delete karna chahte hain?")) {
                 localStorage.removeItem('sitm_chat_memory');
                 currentChatHistory = [];
-                const logs = document.getElementById('uniChatLogs');
-                logs.innerHTML = '<div class="chat-msg bot">Hello! I am your SITM Campus AI Assistant. 🚀 Memory cleared! Ask me anything fresh.</div>';
+                document.getElementById('uniChatLogs').innerHTML = '<div class="chat-msg bot">Hello! Memory cleared. Ask me anything fresh.</div>';
               }
             }
 
@@ -215,16 +221,13 @@ router.use((req, res, next) => {
               
               appendMsg(text, 'user');
               input.value = '';
-              appendMsg("⏳ Thinking...", 'bot-loading');
+              appendMsg("⏳ Processing Request...", 'bot-loading');
               
               try {
                 const res = await fetch('/api/chat-ai', {
                   method: 'POST',
                   headers: {'Content-Type': 'application/json'},
-                  body: JSON.stringify({ 
-                    question: text,
-                    history: currentChatHistory 
-                  })
+                  body: JSON.stringify({ question: text, history: currentChatHistory })
                 });
                 const out = await res.json();
                 removeLoadingMsg();
@@ -232,16 +235,11 @@ router.use((req, res, next) => {
                 
                 currentChatHistory.push({ role: "user", content: text });
                 currentChatHistory.push({ role: "assistant", content: out.reply });
-                
-                if(currentChatHistory.length > 28) {
-                  currentChatHistory.shift(); currentChatHistory.shift();
-                }
-                
+                if(currentChatHistory.length > 20) { currentChatHistory.shift(); currentChatHistory.shift(); }
                 localStorage.setItem('sitm_chat_memory', JSON.stringify(currentChatHistory));
-                
               } catch(err) {
                 removeLoadingMsg();
-                appendMsg("System connection delay.", 'bot');
+                appendMsg("Server synchronization delay.", 'bot');
               }
             }
 
@@ -271,31 +269,102 @@ router.use((req, res, next) => {
   next();
 });
 
+// 🎯 ADVANCED FUNCTION CALLING/INTENT EXTRACTOR AI ROUTER
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history } = req.body;
-    
+    const lowerQ = question.toLowerCase();
+
+    // 🕵️ INTENT 1: STUDENT SEARCHING MARKS DIRECTLY VIA AI
+    if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
+      const match = question.match(/\d+/); // Extract numbers out of query string
+      if (match) {
+        const extractedRoll = match[0];
+        const studentData = await Student.findOne({ roll: extractedRoll });
+        
+        if (studentData) {
+          const sub = studentData.subjects;
+          const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
+          const formattedReply = `📊 *Result Found for Roll No: ${studentData.roll}*\n\n` +
+                                 `👤 Name: ${studentData.name}\n` +
+                                 `📚 Course: ${studentData.course}\n` +
+                                 `---------------------------\n` +
+                                 `🔹 Java Programming: ${sub.java}/100\n` +
+                                 `🔹 R Programming: ${sub.rProg}/100\n` +
+                                 `🔹 Operating Systems: ${sub.os}/100\n` +
+                                 `🔹 Computer Org & Arch: ${sub.coa}/100\n` +
+                                 `🔹 Unix / Linux Lab: ${sub.unixLinux}/100\n` +
+                                 `---------------------------\n` +
+                                 `🏆 Grand Total: ${total}/500 (${((total/500)*100).toFixed(2)}%)`;
+          return res.status(200).json({ reply: formattedReply });
+        } else {
+          return res.status(200).json({ reply: `❌ Roll Number ${extractedRoll} ka koi record server database me nahi mila.` });
+        }
+      }
+    }
+
+    // 🔐 INTENT 2: TEACHERS UPLOADING/UPDATING MARKS VIA AI
+    // Format: "Add result roll: 101, pin: cse_teacher_2026, name: Amit, dob: 22/08/2005, java: 85, rprog: 90, os: 78, coa: 88, unix: 92"
+    if ((lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload")) && lowerQ.includes("pin")) {
+      try {
+        const pinMatch = question.match(/pin:\s*([^\s,]+)/i);
+        const rollMatch = question.match(/roll:\s*([^\s,]+)/i);
+        const nameMatch = question.match(/name:\s*([^,]+)/i);
+        const dobMatch = question.match(/dob:\s*([^\s,]+)/i);
+        
+        const javaMatch = question.match(/java:\s*(\d+)/i);
+        const rMatch = question.match(/rprog:\s*(\d+)/i);
+        const osMatch = question.match(/os:\s*(\d+)/i);
+        const coaMatch = question.match(/coa:\s*(\d+)/i);
+        const unixMatch = question.match(/unix:\s*(\d+)/i);
+
+        if (!pinMatch || !rollMatch || !nameMatch || !dobMatch) {
+          return res.status(200).json({ reply: "❌ Syntax Mismatch! Marks add karne ke liye formats use karein:\n\n*Add result roll: 12, pin: cse_teacher_2026, name: Sumit, dob: 22/08/2005, java: 90, rprog: 85, os: 80, coa: 75, unix: 95*" });
+        }
+
+        const authPin = pinMatch[1].trim();
+        if (authPin !== "cse_teacher_2026" && authPin !== "admin_secure_2026") {
+          return res.status(200).json({ reply: "❌ Operation Denied: Invalid Security Pin provided!" });
+        }
+
+        const targetRoll = rollMatch[1].trim();
+        const targetName = nameMatch[1].trim();
+        const targetDob = dobMatch[1].trim();
+
+        const subjectsObj = {
+          java: javaMatch ? Number(javaMatch[1]) : 0,
+          rProg: rMatch ? Number(rMatch[1]) : 0,
+          os: osMatch ? Number(osMatch[1]) : 0,
+          coa: coaMatch ? Number(coaMatch[1]) : 0,
+          unixLinux: unixMatch ? Number(unixMatch[1]) : 0
+        };
+
+        await Student.findOneAndUpdate(
+          { roll: targetRoll },
+          { name: targetName, dob: targetDob, subjects: subjectsObj, uploadedAt: new Date() },
+          { upsert: true }
+        );
+
+        return res.status(200).json({ reply: `✅ Success! Roll Number ${targetRoll} (${targetName}) ke marks secure cloud database me update ho gaye hain.` });
+      } catch (err) {
+        return res.status(200).json({ reply: "❌ Internal processing error while inserting database variables." });
+      }
+    }
+
+    // 🤖 INTENT 3: STANDARD AI CONVERSATION IF NO DATABASE TRIGGER DETECTED
     let messagePayload = [
       { 
         role: "system", 
-        content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Keep this timeline alignment in mind for all responses. Maintain full continuous awareness of the conversation history provided by the user." 
+        content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. If users ask for marks or updating records, remind them to provide the roll number or the formal format structure with a security pin." 
       }
     ];
 
     if (history && Array.isArray(history)) {
-      history.forEach(msg => {
-        if(msg.role && msg.content) {
-          messagePayload.push({ role: msg.role, content: msg.content });
-        }
-      });
+      history.forEach(msg => { if(msg.role && msg.content) messagePayload.push({ role: msg.role, content: msg.content }); });
     }
-
     messagePayload.push({ role: "user", content: question });
 
-    const postData = JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      messages: messagePayload
-    });
+    const postData = JSON.stringify({ model: "llama-3.3-70b-versatile", messages: messagePayload });
 
     const options = {
       hostname: 'api.groq.com',
@@ -314,32 +383,16 @@ router.post("/api/chat-ai", async (req, res) => {
       apiRes.on('end', () => {
         try {
           const data = JSON.parse(responseBody);
-          let extractedText = "";
-          
-          if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
-            extractedText = data.choices[0].message.content;
-          } else if (data.error) {
-            extractedText = "Engine Error: " + data.error.message;
-          } else {
-            extractedText = "Response matrix shifting error.";
-          }
-          
-          res.status(200).json({ reply: extractedText });
-        } catch (e) {
-          res.status(200).json({ reply: "JSON structural alignment issue." });
-        }
+          res.status(200).json({ reply: data.choices[0].message.content });
+        } catch (e) { res.status(200).json({ reply: "JSON transit mismatch." }); }
       });
-    });
-
-    apiReq.on('error', (e) => {
-      res.status(500).json({ reply: "Handshake transmission failure: " + e.message });
     });
 
     apiReq.write(postData);
     apiReq.end();
 
   } catch (error) {
-    res.status(500).json({ reply: "Internal tracking stack error: " + error.message });
+    res.status(500).json({ reply: "Internal tracking server fault." });
   }
 });
 
