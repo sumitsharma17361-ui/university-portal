@@ -119,13 +119,14 @@ router.post("/api/update-portal-password", async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
-// CSS Injector to overwrite theme dynamically without touching main code
+// CSS & AI Chatbot Widget Injector Engine
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
     res.send = function (html) {
       if (typeof html === "string") {
-        const whiteBlueThemeStyles = `
+        // 1. Premium Theme Styles + Chatbot UI Styles
+        const themeAndChatStyles = `
           <style>
             /* Overwriting with Premium White & Blue Theme */
             body { background-color: #f0f4f8 !important; color: #1e293b !important; }
@@ -148,16 +149,114 @@ router.use((req, res, next) => {
             .db-table th { color: #0284c7 !important; background: #f1f5f9 !important; }
             .db-table td { border-bottom: 1px solid #e2e8f0 !important; color: #334155 !important; }
             .view-records-container { background: #ffffff !important; border: 1px solid #e2e8f0 !important; }
+
+            /* Chatbot UI Design */
+            #uniChatbotContainer { position: fixed; bottom: 20px; right: 20px; z-index: 99999; font-family: 'Segoe UI', sans-serif; }
+            #uniChatLauncher { background: #0284c7; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; font-size: 1.6rem; box-shadow: 0 4px 12px rgba(2,132,199,0.4); display: flex; align-items: center; justify-content: center; }
+            #uniChatBox { width: 340px; height: 430px; background: white; border: 1px solid #cbd5e1; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; }
+            .chat-header { background: #0284c7; color: white; padding: 15px; font-weight: 600; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; }
+            .chat-logs { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; font-size: 0.85rem; }
+            .chat-msg { padding: 8px 12px; border-radius: 12px; max-width: 80%; line-height: 1.4; }
+            .chat-msg.bot { background: #e2e8f0; color: #0f172a; align-self: flex-start; border-bottom-left-radius: 4px; }
+            .chat-msg.user { background: #e0f2fe; color: #0284c7; align-self: flex-end; border-bottom-right-radius: 4px; }
+            .chat-input-area { display: flex; padding: 10px; border-top: 1px solid #e2e8f0; background: white; }
+            .chat-input-area input { flex: 1; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; background: #fff !important; color: #0f172a !important; }
+            .chat-send-btn { background: #0284c7; color: white; border: none; padding: 0 14px; margin-left: 8px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
           </style>
         `;
-        // Injecting the new theme right before closing the head tag
-        html = html.replace("</head>", whiteBlueThemeStyles + "</head>");
+
+        // 2. Chatbot HTML Box Structure
+        const chatbotHtml = `
+          <div id="uniChatbotContainer">
+            <button id="uniChatLauncher" onclick="toggleUniChat()">💬</button>
+            <div id="uniChatBox">
+              <div class="chat-header">
+                <span>🏫 Portal Assistant AI</span>
+                <button onclick="toggleUniChat()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; font-size:1.1rem;">×</button>
+              </div>
+              <div id="uniChatLogs" class="chat-logs">
+                <div class="chat-msg bot">Hello! Welcome to the Tech University Portal. 👋 How can I help you navigate the system today?</div>
+              </div>
+              <div class="chat-input-area">
+                <input type="text" id="uniChatInput" placeholder="Ask a question..." onkeypress="handleChatKey(event)">
+                <button class="chat-send-btn" onclick="sendUniChatMessage()">Send</button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // 3. Chatbot Reply Intelligence Script
+        const chatbotLogicScript = `
+          <script>
+            function toggleUniChat() {
+              const box = document.getElementById('uniChatBox');
+              const launcher = document.getElementById('uniChatLauncher');
+              if(box.style.display === 'none' || box.style.display === '') {
+                box.style.display = 'flex'; launcher.style.display = 'none';
+              } else {
+                box.style.display = 'none'; launcher.style.display = 'flex';
+              }
+            }
+
+            function handleChatKey(e) { if(e.key === 'Enter') sendUniChatMessage(); }
+
+            function sendUniChatMessage() {
+              const input = document.getElementById('uniChatInput');
+              const text = input.value.trim();
+              if(!text) return;
+
+              appendMsg(text, 'user');
+              input.value = '';
+
+              setTimeout(() => {
+                const reply = getBotReply(text.toLowerCase());
+                appendMsg(reply, 'bot');
+              }, 400);
+            }
+
+            function appendMsg(txt, sender) {
+              const logs = document.getElementById('uniChatLogs');
+              const msg = document.createElement('div');
+              msg.className = 'chat-msg ' + sender;
+              msg.innerText = txt;
+              logs.appendChild(msg);
+              logs.scrollTop = logs.scrollHeight;
+            }
+
+            function getBotReply(q) {
+              if(q.includes('hello') || q.includes('hi') || q.includes('hey')) {
+                return "Hello! If you are a student, you can check results. If you are a teacher, use Staff Login.";
+              }
+              if(q.includes('student') || q.includes('result') || q.includes('marksheet')) {
+                return "Students can enter their Roll Number, Date of Birth, check the CAPTCHA box, and click 'View Marksheet' to get their details.";
+              }
+              if(q.includes('teacher') || q.includes('staff') || q.includes('login') || q.includes('upload')) {
+                return "Teachers can click the 'Staff Login' tab at the top, enter the security password, and access the results management dashboard.";
+              }
+              if(q.includes('password') || q.includes('change')) {
+                return "To modify portal access credentials securely, please navigate to the standalone path: /admin-settings";
+              }
+              if(q.includes('pdf') || q.includes('download')) {
+                return "Once a valid result is displayed, a button titled 'Download Provisional PDF' will appear underneath it.";
+              }
+              if(q.includes('captcha') || q.includes('robot')) {
+                return "Make sure to check the 'I am not a robot' verification box before requesting data sheets.";
+              }
+              return "I am a helper bot. For deeper system actions, ensure you select the appropriate portal tabs at the top or contact college support!";
+            }
+          </script>
+        `;
+
+        // Injecting into the base page dynamically
+        html = html.replace("</head>", themeAndChatStyles + "</head>");
+        html = html.replace("</body>", chatbotHtml + chatbotLogicScript + "</body>");
       }
       originalSend.call(this, html);
     };
   }
   next();
 });
+
 
 
 
