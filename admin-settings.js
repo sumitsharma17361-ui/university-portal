@@ -229,7 +229,7 @@ router.post("/api/chat-ai", async (req, res) => {
     const { question } = req.body;
     
     const postData = JSON.stringify({
-      model: "llama3-8b-8192",
+     model: "llama-3.1-8b-instant",
       messages: [
         { role: "system", content: "You are a helpful university website chatbot assistant." },
         { role: "user", content: question }
