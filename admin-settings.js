@@ -10,7 +10,7 @@ const credentialSchema = new mongoose.Schema({
 
 const Credential = mongoose.models.Credential || mongoose.model("Credential", credentialSchema);
 
-// 🔑 APKI LIVE GROQ API KEY
+// 🔑 GROQ API KEY
 const groqKey = "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"; 
 
 router.get("/admin-settings", (req, res) => {
@@ -99,7 +99,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic UI Injector Engine (With LocalStorage Persistent Memory Stack)
+// Dynamic UI Injector Engine (With LocalStorage Memory + Clear Session Button)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -132,6 +132,8 @@ router.use((req, res, next) => {
             #uniChatLauncher { background: #0284c7; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; font-size: 1.6rem; box-shadow: 0 4px 12px rgba(2,132,199,0.4); display: flex; align-items: center; justify-content: center; }
             #uniChatBox { width: 340px; height: 430px; background: white; border: 1px solid #cbd5e1; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; }
             .chat-header { background: #0284c7; color: white; padding: 15px; font-weight: 600; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; }
+            .chat-header-actions { display: flex; align-items: center; gap: 12px; }
+            .chat-action-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.1rem; padding: 2px; }
             .chat-logs { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; font-size: 0.85rem; }
             .chat-msg { padding: 8px 12px; border-radius: 12px; max-width: 80%; line-height: 1.4; white-space: pre-wrap; }
             .chat-msg.bot { background: #e2e8f0; color: #0f172a; align-self: flex-start; border-bottom-left-radius: 4px; }
@@ -148,10 +150,13 @@ router.use((req, res, next) => {
             <div id="uniChatBox">
               <div class="chat-header">
                 <span>🏫 SITM Campus AI Assistant</span>
-                <button onclick="toggleUniChat()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; font-size:1.1rem;">×</button>
+                <div class="chat-header-actions">
+                  <button title="Clear Conversation" class="chat-action-btn" onclick="clearUniChatMemory()">🗑️</button>
+                  <button class="chat-action-btn" onclick="toggleUniChat()" style="font-weight:bold;">×</button>
+                </div>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Hello! I am your SITM Campus AI Assistant. 🚀 I now have permanent memory! Even if you refresh, I won't forget.</div>
+                <div class="chat-msg bot">Hello! I am your SITM Campus AI Assistant. 🚀 Ask me any query!</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -163,13 +168,13 @@ router.use((req, res, next) => {
 
         const chatbotLogicScript = `
           <script>
-            // Persistent Memory Array Linked with LocalStorage
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
 
-            // On Page Reload, rendering older logs back safely
             window.addEventListener('DOMContentLoaded', () => {
               const logs = document.getElementById('uniChatLogs');
               if(currentChatHistory.length > 0) {
+                // Clear the default template welcome message if older logs are active
+                logs.innerHTML = '';
                 currentChatHistory.forEach(msg => {
                   const type = msg.role === 'user' ? 'user' : 'bot';
                   const div = document.createElement('div');
@@ -190,8 +195,19 @@ router.use((req, res, next) => {
                 box.style.display = 'none'; launcher.style.display = 'flex';
               }
             }
+
             function handleChatKey(e) { if(e.key === 'Enter') sendUniChatMessage(); }
             
+            // 🗑️ FUNCTION TO WIPE STORAGE AND RESET SCREEN
+            function clearUniChatMemory() {
+              if(confirm("Kya aap poori chat history delete karna chahte hain?")) {
+                localStorage.removeItem('sitm_chat_memory');
+                currentChatHistory = [];
+                const logs = document.getElementById('uniChatLogs');
+                logs.innerHTML = '<div class="chat-msg bot">Hello! I am your SITM Campus AI Assistant. 🚀 Memory cleared! Ask me anything fresh.</div>';
+              }
+            }
+
             async function sendUniChatMessage() {
               const input = document.getElementById('uniChatInput');
               const text = input.value.trim();
@@ -214,16 +230,13 @@ router.use((req, res, next) => {
                 removeLoadingMsg();
                 appendMsg(out.reply, 'bot');
                 
-                // Commit updates to history stack
                 currentChatHistory.push({ role: "user", content: text });
                 currentChatHistory.push({ role: "assistant", content: out.reply });
                 
-                // Prune old tokens to fit context limits (Keep last 14 logs)
                 if(currentChatHistory.length > 28) {
                   currentChatHistory.shift(); currentChatHistory.shift();
                 }
                 
-                // Save context directly into the browser storage drive
                 localStorage.setItem('sitm_chat_memory', JSON.stringify(currentChatHistory));
                 
               } catch(err) {
@@ -231,6 +244,7 @@ router.use((req, res, next) => {
                 appendMsg("System connection delay.", 'bot');
               }
             }
+
             function appendMsg(txt, sender) {
               const logs = document.getElementById('uniChatLogs');
               const msg = document.createElement('div');
@@ -240,6 +254,7 @@ router.use((req, res, next) => {
               logs.appendChild(msg);
               logs.scrollTop = logs.scrollHeight;
             }
+
             function removeLoadingMsg() {
               const loadEl = document.getElementById('chatLoading');
               if(loadEl) loadEl.remove();
@@ -256,7 +271,6 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 DYNAMIC STATEFUL ENGINE TIER WITH TIME FRAME MATRIX 2026
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history } = req.body;
@@ -330,4 +344,3 @@ router.post("/api/chat-ai", async (req, res) => {
 });
 
 module.exports = router;
-            
