@@ -1,8 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-// 🎯 Fetch library ko call kiya taaki bina constructor ke direct call ho sake
-const fetch = require("node-fetch") || global.fetch;
+// Native HTTPS module ka use (Bina kisi library ya external install ke)
+const https = require("https");
 
 // Database Schema for Credentials
 const credentialSchema = new mongoose.Schema({
@@ -89,7 +89,7 @@ router.get("/admin-settings", (req, res) => {
   `);
 });
 
-// API endpoint to change password
+// Password Update Endpoint
 router.post("/api/update-portal-password", async (req, res) => {
   try {
     const { role, token, password } = req.body;
@@ -103,7 +103,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Theme & UI Chatbot Injector Engine
+// Dynamic Injector Engine
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -223,32 +223,51 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 DIRECT HTTP API LOGIC (No SDK Constructor anymore!)
+// Pure Native HTTPS Network Request (100% stable on any Node environment)
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question } = req.body;
     
-    // Direct REST API Endpoint Call for Gemini 1.5 Flash
-    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + aiKey;
-    
-    const apiResponse = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: "You are a friendly university website assistant. Answer clearly: " + question }] }]
-      })
+    const postData = JSON.stringify({
+      contents: [{ parts: [{ text: "You are a friendly university website assistant. Answer clearly: " + question }] }]
     });
 
-    const data = await apiResponse.json();
-    
-    if (data.candidates && data.candidates[0].content.parts[0].text) {
-      const aiReply = data.candidates[0].content.parts[0].text;
-      res.status(200).json({ reply: aiReply });
-    } else {
-      res.json({ reply: "AI API check response issue, please check your key configuration." });
-    }
+    const options = {
+      hostname: 'generativelanguage.googleapis.com',
+      path: '/v1beta/models/gemini-1.5-flash:generateContent?key=' + aiKey,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const apiReq = https.request(options, (apiRes) => {
+      let responseBody = '';
+      apiRes.on('data', (chunk) => { responseBody += chunk; });
+      apiRes.on('end', () => {
+        try {
+          const data = JSON.parse(responseBody);
+          if (data.candidates && data.candidates[0].content.parts[0].text) {
+            res.status(200).json({ reply: data.candidates[0].content.parts[0].text });
+          } else {
+            res.json({ reply: "AI Response parsing structure issue. Check API Key status." });
+          }
+        } catch (e) {
+          res.status(500).json({ reply: "JSON Parsing Error on server." });
+        }
+      });
+    });
+
+    apiReq.on('error', (e) => {
+      res.status(500).json({ reply: "Network connection error: " + e.message });
+    });
+
+    apiReq.write(postData);
+    apiReq.end();
+
   } catch (error) {
-    res.status(500).json({ reply: "Direct Connection Error: " + error.message });
+    res.status(500).json({ reply: "Server error: " + error.message });
   }
 });
 
