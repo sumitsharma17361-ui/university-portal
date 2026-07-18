@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-// 🎯 CORRECT IMPORT: Capitalization fixed to GoogleGenAI
+// 🎯 FINAL CORRECTION: Official SDK requires GoogleGenAI class helper
 const { GoogleGenAI } = require("@google/generative-ai");
 
 // Database Schema for Credentials
@@ -18,8 +18,8 @@ let aiInstance = null;
 
 if (aiKey && aiKey !== "YOUR_GEMINI_API_KEY_HERE") {
   try {
-    // 🎯 CORRECT INITIALIZATION: Passing the key directly as a string into GoogleGenAI
-    const ai = new GoogleGenAI(aiKey);
+    // 🎯 INITIALIZATION FIX: Creating object with GoogleGenAI constructor
+    const ai = new GoogleGenAI({ apiKey: aiKey });
     aiInstance = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
   } catch (e) {
     console.error("AI Initialization Error: ", e.message);
