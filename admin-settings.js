@@ -1,6 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
+// Native HTTPS module (No crash dependency tier)
+const https = require("https");
 
 // Database Schema for Credentials
 const credentialSchema = new mongoose.Schema({
@@ -9,6 +11,9 @@ const credentialSchema = new mongoose.Schema({
 });
 
 const Credential = mongoose.models.Credential || mongoose.model("Credential", credentialSchema);
+
+// 🔑 AAPKI LIVE GROQ API KEY INJECTED
+const groqKey = "Gsk_RRLNg3wxykeerZrBAQV4WGdyb3FYPU5Y2YSjzW9wWQFTQksLjWkr"; 
 
 // HTML settings portal interface
 router.get("/admin-settings", (req, res) => {
@@ -98,7 +103,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injector Engine
+// Dynamic UI Injector Engine
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -150,7 +155,7 @@ router.use((req, res, next) => {
                 <button onclick="toggleUniChat()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; font-size:1.1rem;">×</button>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Hello! I am powered by Google Gemini AI. 🚀 Ask me any query!</div>
+                <div class="chat-msg bot">Hello! I am powered by Groq Llama-3 AI. 🚀 Ask me any query!</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -178,7 +183,7 @@ router.use((req, res, next) => {
               if(!text) return;
               appendMsg(text, 'user');
               input.value = '';
-              appendMsg("⏳ Processing query via campus node...", 'bot-loading');
+              appendMsg("⏳ AI Thinking...", 'bot-loading');
               try {
                 const res = await fetch('/api/chat-ai', {
                   method: 'POST',
@@ -190,7 +195,7 @@ router.use((req, res, next) => {
                 appendMsg(out.reply, 'bot');
               } catch(err) {
                 removeLoadingMsg();
-                appendMsg("Facing network data sync parameters.", 'bot');
+                appendMsg("System connection timeout.", 'bot');
               }
             }
             function appendMsg(txt, sender) {
@@ -218,37 +223,62 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 FAIL-SAFE INTELLIGENT ROUTING SIMULATION
+// 🎯 HIGH-SPEED GROQ LLAMA 3 ROUTING ARCHITECTURE
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question } = req.body;
-    const cleanQuery = question.toLowerCase();
-    let mockReply = "";
+    
+    const postData = JSON.stringify({
+      model: "llama3-8b-8192",
+      messages: [
+        { role: "system", content: "You are a helpful university website chatbot assistant." },
+        { role: "user", content: question }
+      ]
+    });
 
-    // Comprehensive response evaluation matrix
-    if (cleanQuery.includes("java") || cleanQuery.includes("overloading")) {
-      mockReply = "Java Smart Check:\nMethod Overloading happens when multiple methods have the same name but different parameters (Compile-time polymorphism).\nMethod Overriding happens when a subclass provides a specific implementation of a method already defined in its superclass (Runtime polymorphism).";
-    } else if (cleanQuery.includes("r prog") || cleanQuery.includes("data frame")) {
-      mockReply = "R Language Hub:\nYou can create a dataframe using the data.frame() constructor.\nExample:\ndf <- data.frame(RollNo = c(1, 2), Name = c('Sumit', 'Amit'))\nprint(df)";
-    } else if (cleanQuery.includes("operating system") || cleanQuery.includes("coa") || cleanQuery.includes("architecture")) {
-      mockReply = "COA & OS Core:\nThe Operating System acts as the bridge layer between application software and computer architecture hardware. It handles processes, CPU scheduling, and memory mapping arrays directly coordinating with the computer organization components.";
-    } else if (cleanQuery.includes("exam") || cleanQuery.includes("roadmap") || cleanQuery.includes("semester")) {
-      mockReply = "B.Tech Examination Pipeline:\n1. Focus heavily on Java OOPs concepts and exception frameworks.\n2. Revise basic data operations in R programming.\n3. Keep your Unix/Linux commands and file handling processes strong.\n4. Solve last 3 years internal portal questions.";
-    } else if (cleanQuery.includes("hello") || cleanQuery.includes("hi")) {
-      mockReply = "Hello! I am the Unified Examination Portal AI Assistant. How can I help you today with your CSE studies or portal issues?";
-    } else if (cleanQuery.includes("car")) {
-      mockReply = "Cars run on internal combustion engines or electric battery packs, coordinating mechanical parts through an embedded ECU system. But here on the SITM Portal, I can help you code better engines in Java or process vehicular stats in R!";
-    } else {
-      mockReply = "Portal Engine Note: System is fully up and running. Received query: '" + question + "'. Ask me anything specific about B.Tech CSE courses, Java objects, R arrays, or examination management patterns.";
-    }
+    const options = {
+      hostname: 'api.groq.com',
+      path: '/openai/v1/chat/completions',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + groqKey,
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
 
-    // Direct resolution bypasses credential layers
-    setTimeout(() => {
-      res.status(200).json({ reply: mockReply });
-    }, 400);
+    const apiReq = https.request(options, (apiRes) => {
+      let responseBody = '';
+      apiRes.on('data', (chunk) => { responseBody += chunk; });
+      apiRes.on('end', () => {
+        try {
+          const data = JSON.parse(responseBody);
+          let extractedText = "";
+          
+          if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+            extractedText = data.choices[0].message.content;
+          } else if (data.error) {
+            extractedText = "Groq Engine Error: " + data.error.message;
+          } else {
+            extractedText = "Payload pulled but data matrix shifted.";
+          }
+          
+          res.status(200).json({ reply: extractedText });
+        } catch (e) {
+          res.status(200).json({ reply: "JSON parse mismatch on data pipeline." });
+        }
+      });
+    });
+
+    apiReq.on('error', (e) => {
+      res.status(500).json({ reply: "Network tier handshake failed: " + e.message });
+    });
+
+    apiReq.write(postData);
+    apiReq.end();
 
   } catch (error) {
-    res.status(500).json({ reply: "Portal operational fault: " + error.message });
+    res.status(500).json({ reply: "Internal engine crash: " + error.message });
   }
 });
 
