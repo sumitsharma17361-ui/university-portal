@@ -408,18 +408,29 @@ app.get("/", (req, res) => {
         }
 
         // PDF Generation Script
-        function downloadPDF() {
-          const element = document.getElementById('marksheetView');
+                function downloadPDF() {
+          const content = document.getElementById('marksheetView').innerHTML;
+          const container = document.getElementById('pdf-container');
+          
+          container.innerHTML = content;
+          container.style.display = 'block';
+
           const opt = {
             margin:       10,
             filename:     'Provisional_Marksheet.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
+            html2canvas:  { scale: 2, useCORS: true },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
           };
-          html2pdf().set(opt).from(element).save();
+          
+          html2pdf().set(opt).from(container).save().then(() => {
+            container.style.display = 'none';
+          });
         }
+        
       </script>
+      <div id="pdf-container" style="display:none; padding: 20px; color: black; background: white;"></div>
+      
     </body>
     </html>
   `);
