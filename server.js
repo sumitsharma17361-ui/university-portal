@@ -11,7 +11,7 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("Cloud Cluster Database Connected Successfully!"))
   .catch(err => console.error("Cloud DB Connection Error:", err));
 
-// 1. Data Validation: Min 0, Max 100 applied
+// 1. Data Validation Schema
 const studentSchema = new mongoose.Schema({
   roll: { type: String, required: true, unique: true },
   dob: { type: String, required: true },
@@ -178,7 +178,6 @@ app.get("/", (req, res) => {
         .captcha-box { border: 1px solid #475569; padding: 10px; text-align: center; border-radius: 8px; background: #0f172a; margin-top: 10px; color: #94a3b8; font-size: 0.85rem;}
         .view-records-container { margin-top: 20px; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #475569; overflow-x: auto; }
         
-        /* Advanced Table Styles */
         .analytics-box { display: flex; gap: 10px; margin-bottom: 15px; justify-content: center; }
         .stat-card { background: #1e293b; padding: 8px 15px; border-radius: 6px; font-size: 0.85rem; border: 1px solid #334155; }
         .db-table { width: 100%; border-collapse: collapse; margin-top: 10px; min-width: 600px; }
@@ -382,19 +381,18 @@ app.get("/", (req, res) => {
                 const isPass = pct >= 40;
                 if(isPass) passCount++; else failCount++;
 
-                // Format timestamp elegantly
                 const dateObj = new Date(d.uploadedAt);
                 const formattedTime = dateObj.toLocaleDateString('en-IN') + ' ' + dateObj.toLocaleTimeString('en-IN', {hour: '2-digit', minute:'2-digit'});
 
                 return `
                   <tr>
-                    <td><b>${d.name}</b><br><small style="color:#94a3b8">Roll: ${d.roll}</small></td>
-                    <td>${d.subjects.java} | ${d.subjects.rProg} | ${d.subjects.os} | ${d.subjects.coa} | ${d.subjects.unixLinux}</td>
-                    <td style="color:${isPass ? '#4ade80':'#f87171'}"><b>${total}</b> (${pct}%)</td>
-                    <td><small>${formattedTime}</small></td>
+                    <td><b>\${d.name}</b><br><small style="color:#94a3b8">Roll: \${d.roll}</small></td>
+                    <td>\${d.subjects.java} | \${d.subjects.rProg} | \${d.subjects.os} | \${d.subjects.coa} | \${d.subjects.unixLinux}</td>
+                    <td style="color:\${isPass ? '#4ade80':'#f87171'}"><b>\${total}</b> (\${pct}%)</td>
+                    <td><small>\${formattedTime}</small></td>
                     <td>
-                      <button class="action-btn" style="background:#38bdf8; color:#0f172a" onclick="populateEditForm('${d.roll}')">✏️ Edit</button>
-                      <button class="action-btn" style="background:#ef4444; color:white" onclick="deleteRecord('${d.roll}')">🗑️ Del</button>
+                      <button class="action-btn" style="background:#38bdf8; color:#0f172a" onclick="populateEditForm('\${d.roll}')">✏️ Edit</button>
+                      <button class="action-btn" style="background:#ef4444; color:white" onclick="deleteRecord('\${d.roll}')">🗑️ Del</button>
                     </td>
                   </tr>
                 `;
@@ -405,8 +403,8 @@ app.get("/", (req, res) => {
               document.getElementById('statFail').innerText = failCount;
               container.style.display = 'block';
             } else {
-                                      tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#94a3b8;'>No records found in database.</td></tr>";
-            container.style.display = 'block';
+              tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#94a3b8;'>No records found in database.</td></tr>";
+              container.style.display ='block';
           }
         } catch(err) {
           alert("Error fetching database records.");
@@ -432,7 +430,7 @@ app.get("/", (req, res) => {
         document.getElementById('subUnix').value = student.subjects.unixLinux;
         
         window.scrollTo({ top: document.getElementById('resName').offsetTop - 20, behavior: 'smooth' });
-        document.getElementById('publishStatus').innerHTML = "<span style='color:#38bdf8'>Loaded record for Edit! Modify fields and click update.</span>";
+        document.getElementById('publishStatus').innerHTML = "<span style='color:#38bdf8'> Loaded record for Edit! Modify fields and click update.</span>";
       }
 
       async function deleteRecord(roll) {
@@ -582,4 +580,4 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
+  
