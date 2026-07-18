@@ -174,7 +174,7 @@ app.get("/", (req, res) => {
     <body>
 
       <div class="header">
-        <h1>🎓 Tech University</h1>
+        <h1>🎓 SITM COLLEGE</h1>
         <p>Unified Examination Management Portal</p>
       </div>
 
