@@ -230,10 +230,7 @@ router.post("/api/chat-ai", async (req, res) => {
     
     const postData = JSON.stringify({
      model: "llama-3.1-8b-instant",
-      messages: [
-        { role: "system", content: "You are a helpful university website chatbot assistant." },
-        { role: "user", content: question }
-      ]
+      
     });
 
     const options = {
@@ -244,6 +241,14 @@ router.post("/api/chat-ai", async (req, res) => {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + groqKey,
         'Content-Length': Buffer.byteLength(postData)
+        messages: [
+  { 
+    role: "system", 
+    content: "You are a helpful university website chatbot assistant for SITM College. The current year is 2026. If someone asks about 2026 data or net worth, acknowledge that the current year is 2026, state that you don't have real-time live web-browsing capabilities for exact current figures, and provide the last known estimates or general context smartly." 
+  },
+  { role: "user", content: question }
+]
+    
       }
     };
 
