@@ -13,7 +13,7 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("Cloud Cluster Database Connected Successfully!"))
   .catch(err => console.error("Cloud DB Connection Error:", err));
 
-// MongoDB Student Schema Layout
+// MongoDB Student Schema Layout with Auto Timestamps
 const studentSchema = new mongoose.Schema({
     roll: { type: String, required: true, unique: true },
     dob: { type: String, required: true },
@@ -28,7 +28,7 @@ const studentSchema = new mongoose.Schema({
     },
     cgpa: String,
     status: String
-});
+}, { timestamps: true }); // Auto adds createdAt and updatedAt
 
 const Student = mongoose.model("Student", studentSchema);
 
@@ -60,15 +60,18 @@ app.get("/", (req, res) => {
             input:focus { border-color: #38bdf8; outline: none; }
             .primary-btn { width: 100%; padding: 12px; background: #38bdf8; color: #0f172a; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 10px; }
             .primary-btn:hover { background: #7dd3fc; }
+            .secondary-btn { background: #475569; color: white; margin-top: 8px; }
+            .secondary-btn:hover { background: #64748b; }
             .back-btn { background: transparent; border: 1px solid #475569; color: #94a3b8; margin-top: 15px; width: auto; padding: 8px 16px; font-size: 0.9rem; }
             .back-btn:hover { color: white; border-color: white; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #0f172a; border-radius: 8px; overflow: hidden; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #0f172a; border-radius: 8px; overflow: hidden; font-size: 0.9rem; }
             th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
             th { background: #334155; color: #38bdf8; font-weight: 600; }
             .badge { padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.85rem; }
             .pass { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
             .fail { background: rgba(239, 68, 68, 0.2); color: #f87171; }
             .error { color: #f87171; font-size: 0.95rem; margin-top: 10px; font-weight: 500; }
+            .time-text { font-size: 0.75rem; color: #94a3b8; }
         </style>
     </head>
     <body>
@@ -124,8 +127,17 @@ app.get("/", (req, res) => {
             </div>
             <div class="input-group"><label>Unix / Linux</label><input type="number" id="m-unix"></div>
             <button class="primary-btn" style="background:#f43f5e; color:white;" onclick="uploadStudentResult()">Publish Result</button>
+            <button class="primary-btn secondary-btn" onclick="fetchAllResults()">📊 View All Uploaded Results</button>
             <div id="t-msg" class="error" style="color: #f43f5e;"></div>
             <button class="primary-btn back-btn" onclick="switchView('welcome-screen')">← Logout</button>
+        </div>
+
+        <div id="all-results-card" class="card" style="max-width: 700px;">
+            <h2>📋 All Uploaded Student Records</h2>
+            <div style="overflow-x: auto;">
+                <table id="all-results-table"></table>
+            </div>
+            <button class="primary-btn back-btn" onclick="switchView('teacher-card')">← Back to Panel</button>
         </div>
 
         <script>
@@ -208,6 +220,33 @@ app.get("/", (req, res) => {
                     setTimeout(() => { document.querySelectorAll('#teacher-card input').forEach(i => i.value=""); msg.innerText = ""; }, 2000);
                 }
             }
+            async function fetchAllResults() {
+                let res = await fetch('/api/all-results', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ token: currentActiveToken })
+                });
+                let data = await res.json();
+                if(data.error) { alert(data.error); return; }
+                
+                switchView('all-results-card');
+                let table = document.getElementById('all-results-table');
+                table.innerHTML = '<tr><th>Roll</th><th>Name</th><th>CGPA</th><th>Status</th><th>Added Date & Time</th></tr>';
+                
+                data.forEach(student => {
+                    let dateObj = new Date(student.createdAt);
+                    let formattedDate = dateObj.toLocaleDateString() + ' ' + dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    let badgeClass = student.status === 'PASS' ? 'pass' : 'fail';
+                    
+                    table.innerHTML += \`<tr>
+                        <td>\${student.roll}</td>
+                        <td style="color:#38bdf8; font-weight:600;">\${student.name}</td>
+                        <td style="font-weight:bold;">\${student.cgpa}</td>
+                        <td><span class="badge \${badgeClass}">\${student.status}</span></td>
+                        <td class="time-text">\${formattedDate}</td>
+                    </tr>\`;
+                });
+            }
         </script>
     </body>
     </html>
@@ -236,6 +275,16 @@ app.post("/api/add-result", async (req, res) => {
         await Student.findOneAndUpdate({ roll }, { roll, dob, name, marks, cgpa, status }, { upsert: true });
         res.json({ message: "✅ Published to Cloud Cluster Successfully!" });
     } catch(err) { res.status(500).json({ error: "Database Save Failure!" }); }
+});
+
+// NEW SECURE API TO FETCH ALL RESULTS FOR TEACHER WITH TIMING
+app.post("/api/all-results", async (req, res) => {
+    const { token } = req.body;
+    if(token !== TEACHER_PASSWORD) return res.status(403).json({ error: "Access Denied!" });
+    try {
+        let students = await Student.find({}).sort({ createdAt: -1 }); // Latest first
+        res.json(students);
+    } catch (err) { res.status(500).json({ error: "Database Fetch Failure!" }); }
 });
 
 const PORT = process.env.PORT || 3000;
