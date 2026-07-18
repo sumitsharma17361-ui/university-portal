@@ -405,7 +405,7 @@ app.get("/", (req, res) => {
               document.getElementById('statFail').innerText = failCount;
               container.style.display = 'block';
             } else {
-                          tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#94a3b8;'>No records found in database.</td></tr>";
+                                      tbody.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#94a3b8;'>No records found in database.</td></tr>";
             container.style.display = 'block';
           }
         } catch(err) {
@@ -582,3 +582,4 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
