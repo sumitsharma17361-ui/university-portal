@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-// Native HTTPS module ka use (Bina kisi library ya external install ke)
+// Native HTTPS module ka use (Bina kisi library crash ke)
 const https = require("https");
 
 // Database Schema for Credentials
@@ -12,8 +12,8 @@ const credentialSchema = new mongoose.Schema({
 
 const Credential = mongoose.models.Credential || mongoose.model("Credential", credentialSchema);
 
-// 🔑 APNI GEMINI API KEY YAHAN DAALO
-const aiKey = "AQ.Ab8RN6IxTKrK1z75wmVnZ0jwuGubyfypSbVP68u5OzhwAd5utA"; 
+// 🔑 AAPKI LIVE GEMINI API KEY YAHAN INJECT HO GAYI HAI
+const aiKey = "AQ.Ab8RN6IxTKrK1z75wmVnZ0jwuGubyfypSbVP68u50zhwAd5utA"; 
 
 // HTML settings portal interface
 router.get("/admin-settings", (req, res) => {
@@ -89,7 +89,7 @@ router.get("/admin-settings", (req, res) => {
   `);
 });
 
-// Password Update Endpoint
+// Password Update API
 router.post("/api/update-portal-password", async (req, res) => {
   try {
     const { role, token, password } = req.body;
@@ -103,7 +103,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injector Engine
+// Dynamic UI Injector Engine
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -223,7 +223,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// Pure Native HTTPS Network Request (100% stable on any Node environment)
+// Advanced Parsing Architecture Endpoint
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question } = req.body;
@@ -248,26 +248,35 @@ router.post("/api/chat-ai", async (req, res) => {
       apiRes.on('end', () => {
         try {
           const data = JSON.parse(responseBody);
-          if (data.candidates && data.candidates[0].content.parts[0].text) {
-            res.status(200).json({ reply: data.candidates[0].content.parts[0].text });
+          let extractedText = "";
+          
+          // Triple layer object checking logic
+          if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
+            extractedText = data.candidates[0].content.parts[0].text;
+          } else if (data.text) {
+            extractedText = data.text;
+          } else if (data.error) {
+            extractedText = "Google API Error Alert: " + data.error.message;
           } else {
-            res.json({ reply: "AI Response parsing structure issue. Check API Key status." });
+            extractedText = "Response pulled successfully but no data streams matching.";
           }
+          
+          res.status(200).json({ reply: extractedText });
         } catch (e) {
-          res.status(500).json({ reply: "JSON Parsing Error on server." });
+          res.status(200).json({ reply: "JSON Structural error on payload translation." });
         }
       });
     });
 
     apiReq.on('error', (e) => {
-      res.status(500).json({ reply: "Network connection error: " + e.message });
+      res.status(500).json({ reply: "Network error on handshake: " + e.message });
     });
 
     apiReq.write(postData);
     apiReq.end();
 
   } catch (error) {
-    res.status(500).json({ reply: "Server error: " + error.message });
+    res.status(500).json({ reply: "Internal engine crash: " + error.message });
   }
 });
 
