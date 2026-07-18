@@ -119,5 +119,46 @@ router.post("/api/update-portal-password", async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 });
+// CSS Injector to overwrite theme dynamically without touching main code
+router.use((req, res, next) => {
+  if (req.path === "/") {
+    const originalSend = res.send;
+    res.send = function (html) {
+      if (typeof html === "string") {
+        const whiteBlueThemeStyles = `
+          <style>
+            /* Overwriting with Premium White & Blue Theme */
+            body { background-color: #f0f4f8 !important; color: #1e293b !important; }
+            .header h1 { color: #0284c7 !important; }
+            .header p { color: #64748b !important; }
+            .nav-btn { background: #ffffff !important; border: 2px solid #cbd5e1 !important; color: #0f172a !important; }
+            .nav-btn.active { border-color: #0284c7 !important; background: #e0f2fe !important; box-shadow: 0 0 15px rgba(2, 132, 199, 0.2) !important; color: #0284c7 !important; }
+            .card { background: #ffffff !important; border: 1px solid #e2e8f0 !important; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03) !important; }
+            h2 { color: #0f172a !important; border-bottom: 1px solid #e2e8f0 !important; }
+            label { color: #64748b !important; }
+            input { background: #f8fafc !important; border: 1px solid #cbd5e1 !important; color: #0f172a !important; }
+            input:focus { border-color: #0284c7 !important; }
+            .marksheet { background: #f8fafc !important; border: 1px dashed #cbd5e1 !important; color: #0f172a !important; }
+            .marksheet-header { border-bottom: 1px solid #cbd5e1 !important; color: #0f172a !important; }
+            .marksheet-row { color: #334155 !important; }
+            .total-row { border-top: 1px solid #cbd5e1 !important; color: #0284c7 !important; }
+            .captcha-box { border: 1px solid #e2e8f0 !important; background: #f8fafc !important; color: #64748b !important; }
+            .admin-controls { background: #f8fafc !important; border: 1px dashed #8b5cf6 !important; }
+            .stat-card { background: #ffffff !important; border: 1px solid #e2e8f0 !important; color: #0f172a !important; }
+            .db-table th { color: #0284c7 !important; background: #f1f5f9 !important; }
+            .db-table td { border-bottom: 1px solid #e2e8f0 !important; color: #334155 !important; }
+            .view-records-container { background: #ffffff !important; border: 1px solid #e2e8f0 !important; }
+          </style>
+        `;
+        // Injecting the new theme right before closing the head tag
+        html = html.replace("</head>", whiteBlueThemeStyles + "</head>");
+      }
+      originalSend.call(this, html);
+    };
+  }
+  next();
+});
+
+
 
 module.exports = router;
