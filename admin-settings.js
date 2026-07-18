@@ -13,7 +13,7 @@ const credentialSchema = new mongoose.Schema({
 const Credential = mongoose.models.Credential || mongoose.model("Credential", credentialSchema);
 
 // 🔑 AAPKI LIVE GROQ API KEY INJECTED
-const groqKey = "Gsk_RRLNg3wxykeerZrBAQV4WGdyb3FYPU5Y2YSjzW9wWQFTQksLjWkr"; 
+const groqKey = "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"; 
 
 // HTML settings portal interface
 router.get("/admin-settings", (req, res) => {
