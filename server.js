@@ -60,7 +60,6 @@ app.post("/api/add-result", async (req, res) => {
       await student.save();
     }
     
-    // Save Audit Log
     const log = new Log({ action: "Result Updated for Roll: " + roll, performedBy: role });
     await log.save();
 
@@ -72,7 +71,6 @@ app.post("/api/add-result", async (req, res) => {
 
 app.post("/api/get-result", async (req, res) => {
   try {
-    // Check if published
     let config = await Config.findOne({ configId: "global" });
     if (!config || !config.isPublished) {
       return res.status(403).json({ success: false, message: "Result is currently Hidden/Withheld by Administration." });
@@ -172,8 +170,6 @@ app.get("/", (req, res) => {
         .status-msg { margin-top: 15px; text-align: center; font-size: 0.9rem; font-weight: 600; }
         .success { color: #4ade80; }
         .error { color: #f87171; }
-        .fail-mark { color: #f87171; font-weight: bold; }
-        .pass-mark { color: #4ade80; }
         .marksheet { background: #1e293b; border-radius: 12px; padding: 20px; margin-top: 20px; border: 1px dashed #475569; }
         .marksheet-header { display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px solid #475569; padding-bottom: 8px; }
         .marksheet-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.9rem; }
@@ -187,41 +183,44 @@ app.get("/", (req, res) => {
         .db-table th, .db-table td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; font-size: 0.8rem; }
         .db-table th { color: #38bdf8; background: #1e293b; }
         .action-btn { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-right: 5px; }
-        </style>
-</head>
-<body>
-  <div class="header">
-    <h1>🎓 Tech University</h1>
-    <p>Unified Examination Management Portal</p>
-  </div>
+      </style>
+    </head>
+        <body>
+      <div class="header">
+        <h1>🎓 Tech University</h1>
+        <p>Unified Examination Management Portal</p>
+      </div>
 
-  <!-- 1. Unified Navigation Tabs With Clean Onclick Events -->
-  <div class="main-nav" id="mainNav">
-    <button class="nav-btn active" onclick="switchTab('student')">🧑‍🎓 Student</button>
-    <button class="nav-btn" onclick="switchTab('staff')">🛡️ Staff Login</button>
-  </div>
+      <div class="main-nav" id="mainNav">
+        <button class="nav-btn active" onclick="switchTab('student')">🧑‍🎓 Student</button>
+        <button class="nav-btn" onclick="switchTab('teacher')">🛡️ Staff Login</button>
+      </div>
 
-  <!-- STUDENT PORTAL CARD -->
-  <div id="studentCard" class="card visible">
-    <h2>Student Result Portal</h2>
-    <div class="form-group"><label>Roll Number</label><input type="text" id="studentRoll"></div>
-    <div class="form-group"><label>Date of Birth</label><input type="date" id="studentDob"></div>
-    <div class="captcha-box"><input type="checkbox" id="mockCaptcha" style="width: auto;"> <span>I am not a robot</span></div>
-    <button class="btn" style="background:#38bdf8; color:#0f172a;" onclick="fetchStudentResult()">View Marksheet</button>
-    <div id="studentStatus" class="status-msg"></div>
-    <div id="marksheetView" style="display:none;" class="marksheet"></div>
-    <button id="downloadPdfBtn" class="btn" style="background:#475569; color:white; display:none;" onclick="downloadPDF()">⬇️ Download Provisional PDF</button>
-  </div>
+      <!-- STUDENT PORTAL -->
+      <div id="studentCard" class="card visible">
+        <h2>Student Result Portal</h2>
+        <div class="form-group"><label>Roll Number</label><input type="text" id="studentRoll"></div>
+        <div class="form-group"><label>Date of Birth</label><input type="date" id="studentDob"></div>
+        
+        <div class="captcha-box">
+           <input type="checkbox" id="mockCaptcha" style="width: auto;"> <span>I am not a robot (reCAPTCHA Verification)</span>
+        </div>
 
-  <!-- 2. SECURE STAFF AUTH PORTAL CARD (ID Mismatch Fixed) -->
-  <div id="teacherAuthCard" class="card">
-    <h2>Secure Staff Access</h2>
-    <div class="form-group"><label>Security Password</label><input type="password" id="teacherPassword"></div>
-    <button class="btn" style="background:#4ade80; color:#0f172a;" onclick="verifyAuth()">Login to Cloud</button>
-    <div id="authStatus" class="status-msg"></div>
-  </div>
-  
-      
+        <button class="btn" style="background:#38bdf8; color:#0f172a;" onclick="fetchStudentResult()">View Marksheet</button>
+        <div id="studentStatus" class="status-msg"></div>
+        
+        <div id="marksheetView" style="display:none;" class="marksheet"></div>
+        <button id="downloadPdfBtn" class="btn btn-secondary" style="display:none;" onclick="downloadPDF()">⬇️ Download Provisional PDF</button>
+      </div>
+
+      <!-- AUTH PORTAL -->
+      <div id="teacherAuthCard" class="card">
+        <h2>Secure Staff Access</h2>
+        <p style="text-align:center; color:#94a3b8; font-size:0.8rem; margin-bottom:15px;">Use Teacher or Admin Password</p>
+        <div class="form-group"><label>Security Password</label><input type="password" id="teacherPassword"></div>
+        <button class="btn" style="background:#4ade80; color:#0f172a;" onclick="verifyAuth()">Login to Cloud</button>
+        <div id="authStatus" class="status-msg"></div>
+      </div>
 
       <!-- STAFF DASHBOARD -->
       <div id="teacherDashboardCard" class="card">
@@ -234,11 +233,9 @@ app.get("/", (req, res) => {
            <button class="btn btn-admin" onclick="togglePublish()">Toggle Publish/Hide Status</button>
            <button class="btn btn-secondary" style="background:#8b5cf6; margin-top: 10px;" onclick="viewAllRecords()">📂 View All Saved Records</button>
            
-           <!-- Advanced View Records Container -->
            <div id="allRecordsContainer" class="view-records-container" style="display:none;">
              <h4 style="color:#38bdf8; margin-bottom:10px; font-size:0.9rem; text-align:center;">Database Records Log</h4>
              
-             <!-- Analytics Box -->
              <div class="analytics-box">
                <div class="stat-card">Total: <b id="statTotal">0</b></div>
                <div class="stat-card" style="color:#4ade80;">Pass: <b id="statPass">0</b></div>
@@ -266,21 +263,20 @@ app.get("/", (req, res) => {
           <div class="form-group"><label>Date of Birth</label><input type="date" id="resDob"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Java (0-100)</label><input type="number" id="subJava"></div>
-          <div class="form-group"><label>R Prog (0-100)</label><input type="number" id="subR"></div>
+          <div class="form-group"><label>Java (0-100)</label><input type="number" id="subJava" min="0" max="100"></div>
+          <div class="form-group"><label>R Prog (0-100)</label><input type="number" id="subR" min="0" max="100"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>OS (0-100)</label><input type="number" id="subOs"></div>
-          <div class="form-group"><label>COA (0-100)</label><input type="number" id="subCoa"></div>
+          <div class="form-group"><label>OS (0-100)</label><input type="number" id="subOs" min="0" max="100"></div>
+          <div class="form-group"><label>COA (0-100)</label><input type="number" id="subCoa" min="0" max="100"></div>
         </div>
-        <div class="form-group"><label>Unix / Linux (0-100)</label><input type="number" id="subUnix"></div>
+        <div class="form-group"><label>Unix / Linux (0-100)</label><input type="number" id="subUnix" min="0" max="100"></div>
 
         <button class="btn btn-primary" onclick="publishResult()">Upload / Update Record</button>
         <div id="publishStatus" class="status-msg"></div>
         <button class="btn btn-secondary" onclick="logoutTeacher()">← Logout Securely</button>
       </div>
 
-      <!-- PDF Hidden Layout Target Container -->
       <div id="pdf-container" style="display:none; padding: 30px; color: black; background: white; font-family: 'Segoe UI', sans-serif;"></div>
 
       <script>
@@ -288,28 +284,17 @@ app.get("/", (req, res) => {
         let cachedRecords = [];
 
         function switchTab(tab) {
-  // 1. Saare cards ko pehle screen se hide karo
-  document.querySelectorAll('.card').forEach(function(c) {
-    c.classList.remove('visible');
-  });
-  
-  // 2. Dono tabs se active blue border ya shadow styling hatao
-  document.querySelectorAll('.nav-btn').forEach(function(b) {
-    b.classList.remove('active');
-  });
-  
-  // 3. Jo tab click hua hai, sirf use active karo aur uska card dikhao
-  if (tab === 'student') {
-    document.querySelectorAll('.nav-btn')[0].classList.add('active');
-    document.getElementById('studentCard').classList.add('visible');
-  } else {
-    document.querySelectorAll('.nav-btn')[1].classList.add('active');
-    document.getElementById('teacherAuthCard').classList.add('visible');
-  }
-}
-
-
-        
+          document.querySelectorAll('.card').forEach(c => c.classList.remove('visible'));
+          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+          
+          if(tab === 'student') {
+            document.querySelectorAll('.nav-btn')[0].classList.add('active');
+            document.getElementById('studentCard').classList.add('visible');
+          } else {
+            document.querySelectorAll('.nav-btn')[1].classList.add('active');
+            document.getElementById('teacherAuthCard').classList.add('visible');
+          }
+        }
 
         async function verifyAuth() {
           const pass = document.getElementById('teacherPassword').value;
@@ -588,5 +573,3 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-    
