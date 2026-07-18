@@ -187,44 +187,41 @@ app.get("/", (req, res) => {
         .db-table th, .db-table td { padding: 10px; text-align: left; border-bottom: 1px solid #334155; font-size: 0.8rem; }
         .db-table th { color: #38bdf8; background: #1e293b; }
         .action-btn { padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.75rem; font-weight: bold; margin-right: 5px; }
-      </style>
-    </head>
-        <body>
-      <div class="header">
-        <h1>🎓 Tech University</h1>
-        <p>Unified Examination Management Portal</p>
-      </div>
+        </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎓 Tech University</h1>
+    <p>Unified Examination Management Portal</p>
+  </div>
 
-      <div class="main-nav" id="mainNav">
-        <button class="nav-btn active" onclick="switchTab('student')">🧑‍🎓 Student</button>
-        <button class="nav-btn" onclick="switchTab('teacher')">🛡️ Staff Login</button>
-      </div>
+  <!-- 1. Unified Navigation Tabs With Clean Onclick Events -->
+  <div class="main-nav" id="mainNav">
+    <button class="nav-btn active" onclick="switchTab('student')">🧑‍🎓 Student</button>
+    <button class="nav-btn" onclick="switchTab('staff')">🛡️ Staff Login</button>
+  </div>
 
-      <!-- STUDENT PORTAL -->
-      <div id="studentCard" class="card visible">
-        <h2>Student Result Portal</h2>
-        <div class="form-group"><label>Roll Number</label><input type="text" id="studentRoll"></div>
-        <div class="form-group"><label>Date of Birth</label><input type="date" id="studentDob"></div>
-        
-        <div class="captcha-box">
-           <input type="checkbox" id="mockCaptcha" style="width: auto;"> <span>I am not a robot (reCAPTCHA Verification)</span>
-        </div>
+  <!-- STUDENT PORTAL CARD -->
+  <div id="studentCard" class="card visible">
+    <h2>Student Result Portal</h2>
+    <div class="form-group"><label>Roll Number</label><input type="text" id="studentRoll"></div>
+    <div class="form-group"><label>Date of Birth</label><input type="date" id="studentDob"></div>
+    <div class="captcha-box"><input type="checkbox" id="mockCaptcha" style="width: auto;"> <span>I am not a robot</span></div>
+    <button class="btn" style="background:#38bdf8; color:#0f172a;" onclick="fetchStudentResult()">View Marksheet</button>
+    <div id="studentStatus" class="status-msg"></div>
+    <div id="marksheetView" style="display:none;" class="marksheet"></div>
+    <button id="downloadPdfBtn" class="btn" style="background:#475569; color:white; display:none;" onclick="downloadPDF()">⬇️ Download Provisional PDF</button>
+  </div>
 
-        <button class="btn" style="background:#38bdf8; color:#0f172a;" onclick="fetchStudentResult()">View Marksheet</button>
-        <div id="studentStatus" class="status-msg"></div>
-        
-        <div id="marksheetView" style="display:none;" class="marksheet"></div>
-        <button id="downloadPdfBtn" class="btn btn-secondary" style="display:none;" onclick="downloadPDF()">⬇️ Download Provisional PDF</button>
-      </div>
-
-      <!-- AUTH PORTAL -->
-      <div id="teacherAuthCard" class="card">
-        <h2>Secure Staff Access</h2>
-        <p style="text-align:center; color:#94a3b8; font-size:0.8rem; margin-bottom:15px;">Use Teacher or Admin Password</p>
-        <div class="form-group"><label>Security Password</label><input type="password" id="teacherPassword"></div>
-        <button class="btn" style="background:#4ade80; color:#0f172a;" onclick="verifyAuth()">Login to Cloud</button>
-        <div id="authStatus" class="status-msg"></div>
-      </div>
+  <!-- 2. SECURE STAFF AUTH PORTAL CARD (ID Mismatch Fixed) -->
+  <div id="teacherAuthCard" class="card">
+    <h2>Secure Staff Access</h2>
+    <div class="form-group"><label>Security Password</label><input type="password" id="teacherPassword"></div>
+    <button class="btn" style="background:#4ade80; color:#0f172a;" onclick="verifyAuth()">Login to Cloud</button>
+    <div id="authStatus" class="status-msg"></div>
+  </div>
+  
+      
 
       <!-- STAFF DASHBOARD -->
       <div id="teacherDashboardCard" class="card">
