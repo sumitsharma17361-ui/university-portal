@@ -50,7 +50,10 @@ app.post("/api/add-result", async (req, res) => {
     const { roll, dob, name, subjects, role } = req.body;
     let student = await Student.findOne({ roll });
     if (student) {
-      student.dob = dob; student.name = name; student.subjects = subjects; student.uploadedAt = new Date();
+      student.dob = dob; 
+      student.name = name; 
+      student.subjects = subjects; 
+      student.uploadedAt = new Date();
       await student.save();
     } else {
       student = new Student({ roll, dob, name, subjects });
@@ -332,12 +335,12 @@ app.get("/", (req, res) => {
             const out = await res.json();
             
             if(out.success && out.data.length > 0) {
-              list.innerHTML = out.data.map(d => `
+              list.innerHTML = out.data.map(d => \`
                 <div class="record-item">
-                  <span><b>${d.name}</b> (${d.roll})</span>
+                  <span><b>\${d.name}</b> (\${d.roll})</span>
                   <span style="color:#38bdf8; font-size:0.8rem;">Uploaded</span>
                 </div>
-              `).join('');
+              \`).join('');
               container.style.display = 'block';
             } else {
               list.innerHTML = "<p style='text-align:center; font-size:0.85rem; color:#94a3b8;'>No records found in DB.</p>";
@@ -475,3 +478,5 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+  
