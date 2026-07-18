@@ -1,8 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-// 🎯 FINAL CORRECTION: Official SDK requires GoogleGenAI class helper
-const { GoogleGenAI } = require("@google/generative-ai");
+// 🎯 Fetch library ko call kiya taaki bina constructor ke direct call ho sake
+const fetch = require("node-fetch") || global.fetch;
 
 // Database Schema for Credentials
 const credentialSchema = new mongoose.Schema({
@@ -14,17 +14,6 @@ const Credential = mongoose.models.Credential || mongoose.model("Credential", cr
 
 // 🔑 APNI GEMINI API KEY YAHAN DAALO
 const aiKey = "AQ.Ab8RN6IxTKrK1z75wmVnZ0jwuGubyfypSbVP68u5OzhwAd5utA"; 
-let aiInstance = null;
-
-if (aiKey && aiKey !== "YOUR_GEMINI_API_KEY_HERE") {
-  try {
-    // 🎯 INITIALIZATION FIX: Creating object with GoogleGenAI constructor
-    const ai = new GoogleGenAI({ apiKey: aiKey });
-    aiInstance = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-  } catch (e) {
-    console.error("AI Initialization Error: ", e.message);
-  }
-}
 
 // HTML settings portal interface
 router.get("/admin-settings", (req, res) => {
@@ -234,19 +223,32 @@ router.use((req, res, next) => {
   next();
 });
 
-// Real-Time Gemini AI API Endpoint
+// 🎯 DIRECT HTTP API LOGIC (No SDK Constructor anymore!)
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question } = req.body;
-    if (!aiInstance) {
-      return res.json({ reply: "AI Model not configured yet on server side. Check API key." });
+    
+    // Direct REST API Endpoint Call for Gemini 1.5 Flash
+    const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + aiKey;
+    
+    const apiResponse = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: "You are a friendly university website assistant. Answer clearly: " + question }] }]
+      })
+    });
+
+    const data = await apiResponse.json();
+    
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      const aiReply = data.candidates[0].content.parts[0].text;
+      res.status(200).json({ reply: aiReply });
+    } else {
+      res.json({ reply: "AI API check response issue, please check your key configuration." });
     }
-    const promptContext = "You are a friendly university website assistant. Answer the student's question clearly: " + question;
-    const result = await aiInstance.generateContent(promptContext);
-    const response = await result.response;
-    res.status(200).json({ reply: response.text() });
   } catch (error) {
-    res.status(500).json({ reply: "Gemini Engine Error: " + error.message });
+    res.status(500).json({ reply: "Direct Connection Error: " + error.message });
   }
 });
 
