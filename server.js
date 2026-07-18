@@ -6,12 +6,13 @@ app.use(express.json());
 
 const TEACHER_PASSWORD = "cse_teacher_2026"; 
 
-// Cloud Database Connection (Injected by Render environment variables)
-const MONGO_URI = process.env.MONGO_URI;
+// Hardcoded Secure MongoDB Connection
+const MONGO_URI = "mongodb+srv://sumitsharma17361_db_user:S26CzHyqdBgLuFuw@cluster0.ihz6w8n.mongodb.net/?appName=Cluster0";
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log("Cloud Cluster Database Connected Successfully!"))
   .catch(err => console.error("Cloud DB Connection Error:", err));
+
 
 // MongoDB Student Schema Layout with Auto Timestamps
 const studentSchema = new mongoose.Schema({
