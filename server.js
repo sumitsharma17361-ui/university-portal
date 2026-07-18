@@ -4,14 +4,12 @@ const app = express();
 
 app.use(express.json());
 
-// Hardcoded Secure MongoDB Connection
 const MONGO_URI = "mongodb+srv://sumitsharma17361_db_user:S26CzHyqdBgLuFuw@cluster0.ihz6w8n.mongodb.net/?appName=Cluster0";
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log("Cloud Cluster Database Connected Successfully!"))
   .catch(err => console.error("Cloud DB Connection Error:", err));
 
-// MongoDB Student Schema Layout
 const studentSchema = new mongoose.Schema({
   roll: { type: String, required: true, unique: true },
   dob: { type: String, required: true },
@@ -29,7 +27,6 @@ const studentSchema = new mongoose.Schema({
 
 const Student = mongoose.model("Student", studentSchema);
 
-// API Routes
 app.post("/api/add-result", async (req, res) => {
   try {
     const { roll, dob, name, subjects } = req.body;
@@ -44,7 +41,7 @@ app.post("/api/add-result", async (req, res) => {
       student = new Student({ roll, dob, name, subjects });
       await student.save();
     }
-    res.status(200).json({ success: true, message: "Result published to cloud successfully!" });
+    res.status(200).json({ success: true, message: "Published successfully!" });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -57,7 +54,7 @@ app.post("/api/get-result", async (req, res) => {
     if (student) {
       res.status(200).json({ success: true, data: student });
     } else {
-      res.status(404).json({ success: false, message: "No record found! Check Roll No & DOB." });
+      res.status(404).json({ success: false, message: "No record found!" });
     }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -73,7 +70,6 @@ app.get("/api/all-results", async (req, res) => {
   }
 });
 
-// Frontend User Interface
 app.get("/", (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -137,7 +133,6 @@ app.get("/", (req, res) => {
         <button class="nav-btn" onclick="switchTab('teacher')">🧑‍🏫<br>Teacher Portal</button>
       </div>
 
-      <!-- STUDENT SCREEN -->
       <div id="studentCard" class="card visible">
         <h2>Student Access Corner</h2>
         <div class="form-group">
@@ -150,11 +145,9 @@ app.get("/", (req, res) => {
         </div>
         <button class="btn btn-primary" style="background:#38bdf8; color:#0f172a;" onclick="fetchStudentResult()">View Marksheet</button>
         <div id="studentStatus" class="status-msg"></div>
-        
         <div id="marksheetView" style="display:none;" class="marksheet"></div>
       </div>
 
-      <!-- TEACHER AUTH SCREEN -->
       <div id="teacherAuthCard" class="card">
         <h2>Teacher Secure Login</h2>
         <div class="form-group">
@@ -165,7 +158,6 @@ app.get("/", (req, res) => {
         <div id="authStatus" class="status-msg"></div>
       </div>
 
-      <!-- TEACHER DASHBOARD SCREEN -->
       <div id="teacherDashboardCard" class="card">
         <h2>Teacher Management Dashboard</h2>
         <center><div id="totalCounter" class="badge-counter">Loading cloud data...</div></center>
@@ -212,12 +204,10 @@ app.get("/", (req, res) => {
 
         <button class="btn btn-primary" onclick="publishResult()">Publish Result</button>
         <button class="btn btn-secondary btn-view-all" onclick="loadAllUploadedResults()">📊 View All Uploaded Results</button>
-        
         <div id="publishStatus" class="status-msg"></div>
         <button class="btn btn-secondary" onclick="logoutTeacher()">← Logout</button>
       </div>
 
-      <!-- ALL RESULTS VIEW CARD -->
       <div id="allResultsCard" class="card" style="max-width: 700px;">
         <h2>All Uploaded University Records</h2>
         <div class="form-group search-box">
@@ -268,7 +258,7 @@ app.get("/", (req, res) => {
           const pass = document.getElementById('teacherPassword').value;
           const authStatus = document.getElementById('authStatus');
           if(pass === 'cse_teacher_2026') {
-            authStatus.innerHTML = "<span class='success'>✓ Access Granted! Fetching metrics...</span>";
+            authStatus.innerHTML = "<span class='success'>✓ Access Granted!</span>";
             setTimeout(() => {
               document.getElementById('teacherAuthCard').classList.remove('visible');
               document.getElementById('teacherDashboardCard').classList.add('visible');
@@ -327,7 +317,7 @@ app.get("/", (req, res) => {
           };
 
           if(!data.name || !data.roll || !data.dob || isNaN(data.subjects.java)) {
-            status.innerHTML = "<span class='error'>❌ Complete all inputs properly!</span>";
+            status.innerHTML = "<span class='error'>❌ Complete all inputs!</span>";
             return;
           }
 
@@ -354,7 +344,7 @@ app.get("/", (req, res) => {
           const tableBody = document.getElementById('resultsTableBody');
           const status = document.getElementById('tableStatus');
           tableBody.innerHTML = '';
-          status.innerHTML = '⏳ Loading cloud data items...';
+          status.innerHTML = '⏳ Loading cloud data...';
 
           document.getElementById('teacherDashboardCard').classList.remove('visible');
           document.getElementById('allResultsCard').classList.add('visible');
@@ -367,7 +357,7 @@ app.get("/", (req, res) => {
               allFetchedRecords = out.data;
               renderTableRows(allFetchedRecords);
             } else {
-              status.innerHTML = "<span class='error'>❌ Database Fetch Failure or No Records Found!</span>";
+              status.innerHTML = "<span class='error'>❌ No Records Found!</span>";
             }
           } catch(e) {
             status.innerHTML = "<span class='error'>❌ Database Fetch Failure!</span>";
@@ -379,16 +369,21 @@ app.get("/", (req, res) => {
           tableBody.innerHTML = '';
           records.forEach(st => {
             const dateStr = new Date(st.uploadedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-            const fmt = (m) => m < 33 ? '<span class="fail-mark">' + m + '</span>' : '<span class="pass-mark">' + m + '</span>';
+            
+            const fmtJava = st.subjects.java < 33 ? '<span class="fail-mark">' + st.subjects.java + '</span>' : '<span class="pass-mark">' + st.subjects.java + '</span>';
+            const fmtR = st.subjects.rProg < 33 ? '<span class="fail-mark">' + st.subjects.rProg + '</span>' : '<span class="pass-mark">' + st.subjects.rProg + '</span>';
+            const fmtOs = st.subjects.os < 33 ? '<span class="fail-mark">' + st.subjects.os + '</span>' : '<span class="pass-mark">' + st.subjects.os + '</span>';
+            const fmtCoa = st.subjects.coa < 33 ? '<span class="fail-mark">' + st.subjects.coa + '</span>' : '<span class="pass-mark">' + st.subjects.coa + '</span>';
+            const fmtUnix = st.subjects.unixLinux < 33 ? '<span class="fail-mark">' + st.subjects.unixLinux + '</span>' : '<span class="pass-mark">' + st.subjects.unixLinux + '</span>';
 
             const row = '<tr>' +
               '<td>' + st.roll + '</td>' +
               '<td><b>' + st.name + '</b></td>' +
-              '<td>' + fmt(st.subjects.java) + '</td>' +
-              '<td>' + fmt(st.subjects.rProg) + '</td>' +
-              '<td>' + fmt(st.subjects.os) + '</td>' +
-              '<td>' + fmt(st.subjects.coa) + '</td>' +
-              '<td>' + fmt(st.subjects.unixLinux) + '</td>' +
+              '<td>' + fmtJava + '</td>' +
+              '<td>' + fmtR + '</td>' +
+              '<td>' + fmtOs + '</td>' +
+              '<td>' + fmtCoa + '</td>' +
+              '<td>' + fmtUnix + '</td>' +
               '<td style="color:#94a3b8; font-size:0.75rem;">' + dateStr + '</td>' +
             '</tr>';
             tableBody.innerHTML += row;
@@ -417,22 +412,56 @@ app.get("/", (req, res) => {
           const msk = document.getElementById('marksheetView');
           
           if(!roll || !dob) {
-            status.innerHTML = "<span class='error'>❌ Enter Roll Number & Date of Birth!</span>";
+            status.innerHTML = "<span class='error'>❌ Enter Roll Number & DOB!</span>";
             return;
           }
           
           dob = dob.split('-').reverse().join('/');
-          status.innerHTML = '⏳ Accessing Cloud Database Node...';
+          status.innerHTML = '⏳ Accessing Cloud Database...';
           msk.style.display = 'none';
 
           try {
             const res = await fetch('/api/get-result', {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ roll, dob })
-            });
-            const out = await res.json();
-            if(out.success) {
-              status.innerHTML = "<span class='success'>✓ Record Verification Successful!</span>";
-              const d = out.data;
-              const total = d.subjects.
+                          body: JSON.stringify({ roll, dob })
+          });
+          const out = await res.json();
+          if(out.success) {
+            status.innerHTML = "<span class='success'>✓ Success!</span>";
+            const d = out.data;
+            const total = d.subjects.java + d.subjects.rProg + d.subjects.os + d.subjects.coa + d.subjects.unixLinux;
+            const pct = ((total / 500) * 100).toFixed(2);
+            
+            msk.innerHTML = '<div class="marksheet-header">' +
+                '<span><b>NAME:</b> ' + d.name + '</span>' +
+                '<span><b>ROLL:</b> ' + d.roll + '</span>' +
+              '</div>' +
+              '<div style="font-size:0.8rem; color:#94a3b8; margin-bottom:10px;">COURSE: ' + d.course + '</div>' +
+              '<div class="marksheet-row"><span>Java Programming:</span><b>' + d.subjects.java + '</b></div>' +
+              '<div class="marksheet-row"><span>R Programming:</span><b>' + d.subjects.rProg + '</b></div>' +
+              '<div class="marksheet-row"><span>Operating Systems:</span><b>' + d.subjects.os + '</b></div>' +
+              '<div class="marksheet-row"><span>Computer Org & Arch:</span><b>' + d.subjects.coa + '</b></div>' +
+              '<div class="marksheet-row"><span>Unix / Linux Lab:</span><b>' + d.subjects.unixLinux + '</b></div>' +
+              '<div class="marksheet-row total-row">' +
+                '<span>Grand Total:</span>' +
+                '<span>' + total + '/500 (' + pct + '%)</span>' +
+              '</div>';
+            msk.style.display = 'block';
+          } else {
+            status.innerHTML = "<span class='error'>❌ Cloud Server Error</span>";
+          }
+        } catch(e) {
+          status.innerHTML = "<span class='error'>❌ Cloud Server Error</span>";
+        }
+      }
+    </script>
+  </body>
+  </html>
+  `);
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+             
