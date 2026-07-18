@@ -30,9 +30,9 @@ const studentSchema = new mongoose.Schema({
 const Student = mongoose.model("Student", studentSchema);
 
 // API Routes
-app.post("/api/add-result", async (codeReq, codeRes) => {
+app.post("/api/add-result", async (req, res) => {
   try {
-    const { roll, dob, name, subjects } = codeReq.body;
+    const { roll, dob, name, subjects } = req.body;
     let student = await Student.findOne({ roll });
     if (student) {
       student.dob = dob;
@@ -44,38 +44,38 @@ app.post("/api/add-result", async (codeReq, codeRes) => {
       student = new Student({ roll, dob, name, subjects });
       await student.save();
     }
-    codeRes.status(200).json({ success: true, message: "Result published to cloud successfully!" });
+    res.status(200).json({ success: true, message: "Result published to cloud successfully!" });
   } catch (error) {
-    codeRes.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.post("/api/get-result", async (codeReq, codeRes) => {
+app.post("/api/get-result", async (req, res) => {
   try {
-    const { roll, dob } = codeReq.body;
+    const { roll, dob } = req.body;
     const student = await Student.findOne({ roll, dob });
     if (student) {
-      codeRes.status(200).json({ success: true, data: student });
+      res.status(200).json({ success: true, data: student });
     } else {
-      codeRes.status(404).json({ success: false, message: "No record found! Check Roll No & DOB." });
+      res.status(404).json({ success: false, message: "No record found! Check Roll No & DOB." });
     }
   } catch (error) {
-    codeRes.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.get("/api/all-results", async (codeReq, codeRes) => {
+app.get("/api/all-results", async (req, res) => {
   try {
     const allStudents = await Student.find({}).sort({ uploadedAt: -1 });
-    codeRes.status(200).json({ success: true, data: allStudents });
+    res.status(200).json({ success: true, data: allStudents });
   } catch (error) {
-    codeRes.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Frontend User Interface
-app.get("/", (codeReq, codeRes) => {
-  codeRes.send(`
+app.get("/", (req, res) => {
+  res.send(`
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -280,13 +280,11 @@ app.get("/", (codeReq, codeRes) => {
           }
         }
 
-        // FIX: Logout completely clears password state and input fields
         function logoutTeacher() {
           document.getElementById('teacherPassword').value = ''; 
           document.getElementById('authStatus').innerHTML = '';
           document.getElementById('publishStatus').innerHTML = '';
           
-          // Clear input fields inside dashboard
           document.getElementById('resName').value = '';
           document.getElementById('resRoll').value = '';
           document.getElementById('resDob').value = '';
@@ -342,7 +340,7 @@ app.get("/", (codeReq, codeRes) => {
             });
             const out = await res.json();
             if(out.success) {
-              status.innerHTML = "<span class='success'>❌ Published to Cloud Cluster Successfully!</span>";
+              status.innerHTML = "<span class='success'>✓ Published to Cloud Cluster Successfully!</span>";
               updateTotalCount();
             } else {
               status.innerHTML = "<span class='error'>❌ Database Save Failure!</span>";
@@ -366,7 +364,7 @@ app.get("/", (codeReq, codeRes) => {
             const out = await res.json();
             if(out.success && out.data.length > 0) {
               status.innerHTML = '';
-              allFetchedRecords = out.data; // Cache for search feature
+              allFetchedRecords = out.data;
               renderTableRows(allFetchedRecords);
             } else {
               status.innerHTML = "<span class='error'>❌ Database Fetch Failure or No Records Found!</span>";
@@ -381,25 +379,22 @@ app.get("/", (codeReq, codeRes) => {
           tableBody.innerHTML = '';
           records.forEach(st => {
             const dateStr = new Date(st.uploadedAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-            
-            // Helper to dynamic format fail marks (<33)
-            const fmt = (m) => m < 33 ? \`<span class="fail-mark">\${m}</span>\` : \`<span class="pass-mark">\${m}</span>\`;
+            const fmt = (m) => m < 33 ? '<span class="fail-mark">' + m + '</span>' : '<span class="pass-mark">' + m + '</span>';
 
-            const row = \`<tr>
-              <td>\${st.roll}</td>
-              <td><b>\${st.name}</b></td>
-              <td>\${fmt(st.subjects.java)}</td>
-              <td>\${fmt(st.subjects.rProg)}</td>
-              <td>\${fmt(st.subjects.os)}</td>
-              <td>\${fmt(st.subjects.coa)}</td>
-              <td>\${fmt(st.subjects.unixLinux)}</td>
-              <td style="color:#94a3b8; font-size:0.75rem;">\${dateStr}</td>
-            </tr>\`;
+            const row = '<tr>' +
+              '<td>' + st.roll + '</td>' +
+              '<td><b>' + st.name + '</b></td>' +
+              '<td>' + fmt(st.subjects.java) + '</td>' +
+              '<td>' + fmt(st.subjects.rProg) + '</td>' +
+              '<td>' + fmt(st.subjects.os) + '</td>' +
+              '<td>' + fmt(st.subjects.coa) + '</td>' +
+              '<td>' + fmt(st.subjects.unixLinux) + '</td>' +
+              '<td style="color:#94a3b8; font-size:0.75rem;">' + dateStr + '</td>' +
+            '</tr>';
             tableBody.innerHTML += row;
           });
         }
 
-        // EXTRA FEATURE: Real-time search functionality
         function filterResultsTable() {
           const query = document.getElementById('resultSearch').value.toLowerCase();
           const filtered = allFetchedRecords.filter(st => 
@@ -434,4 +429,10 @@ app.get("/", (codeReq, codeRes) => {
             const res = await fetch('/api/get-result', {
               method: 'POST',
               headers: {'Content-Type': 'application/json'},
-              body: JSON.string
+              body: JSON.stringify({ roll, dob })
+            });
+            const out = await res.json();
+            if(out.success) {
+              status.innerHTML = "<span class='success'>✓ Record Verification Successful!</span>";
+              const d = out.data;
+              const total = d.subjects.
