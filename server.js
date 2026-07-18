@@ -291,17 +291,28 @@ app.get("/", (req, res) => {
         let cachedRecords = [];
 
         function switchTab(tab) {
-          document.querySelectorAll('.card').forEach(c => c.classList.remove('visible'));
-          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-          
-          if(tab === 'student') {
-            document.querySelectorAll('.nav-btn')[0].classList.add('active');
-            document.getElementById('studentCard').classList.add('visible');
-          } else {
-            document.querySelectorAll('.nav-btn')[1].classList.add('active');
-            document.getElementById('teacherAuthCard').classList.add('visible');
-          }
-        }
+  // 1. Saare cards ko pehle screen se hide karo
+  document.querySelectorAll('.card').forEach(function(c) {
+    c.classList.remove('visible');
+  });
+  
+  // 2. Dono tabs se active blue border ya shadow styling hatao
+  document.querySelectorAll('.nav-btn').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  
+  // 3. Jo tab click hua hai, sirf use active karo aur uska card dikhao
+  if (tab === 'student') {
+    document.querySelectorAll('.nav-btn')[0].classList.add('active');
+    document.getElementById('studentCard').classList.add('visible');
+  } else {
+    document.querySelectorAll('.nav-btn')[1].classList.add('active');
+    document.getElementById('teacherAuthCard').classList.add('visible');
+  }
+}
+
+
+        
 
         async function verifyAuth() {
           const pass = document.getElementById('teacherPassword').value;
