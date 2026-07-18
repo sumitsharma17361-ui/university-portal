@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-// Native HTTPS module (No crash dependency tier)
+// Native HTTPS module for secure payload transit
 const https = require("https");
 
 // Database Schema for Credentials
@@ -12,8 +12,8 @@ const credentialSchema = new mongoose.Schema({
 
 const Credential = mongoose.models.Credential || mongoose.model("Credential", credentialSchema);
 
-// 🔑 GROQ API KEY WITH CORRECT CASE SENSITIVITY
-const groqKey = "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"; 
+// 🔑 AAPKI LIVE DEEPSEEK API KEY INJECTED
+const deepseekKey = "sk-a1a4dafceea1436faeca373793a08059"; 
 
 // HTML settings portal interface
 router.get("/admin-settings", (req, res) => {
@@ -151,11 +151,11 @@ router.use((req, res, next) => {
             <button id="uniChatLauncher" onclick="toggleUniChat()">💬</button>
             <div id="uniChatBox">
               <div class="chat-header">
-                <span>🏫 Portal Smart AI Assistant</span>
+                <span>🏫 SITM Campus Live AI</span>
                 <button onclick="toggleUniChat()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; font-size:1.1rem;">×</button>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Hello! I am powered by Groq Llama AI. 🚀 Ask me any query!</div>
+                <div class="chat-msg bot">Hello! I am the campus assistant powered by live DeepSeek Engine. 🚀 Ask me about coding or current stats!</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -183,7 +183,7 @@ router.use((req, res, next) => {
               if(!text) return;
               appendMsg(text, 'user');
               input.value = '';
-              appendMsg("⏳ AI Thinking...", 'bot-loading');
+              appendMsg("⏳ DeepSeek Processing...", 'bot-loading');
               try {
                 const res = await fetch('/api/chat-ai', {
                   method: 'POST',
@@ -195,7 +195,7 @@ router.use((req, res, next) => {
                 appendMsg(out.reply, 'bot');
               } catch(err) {
                 removeLoadingMsg();
-                appendMsg("System connection timeout.", 'bot');
+                appendMsg("System transmission delay.", 'bot');
               }
             }
             function appendMsg(txt, sender) {
@@ -223,29 +223,30 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 HIGH-SPEED GROQ LLAMA 3.1 ROUTING WITH UPDATED 2026 SYSTEM CONTEXT
+// 🎯 DYNAMIC DEEPSEEK CORE CHAT ROUTE (With explicit 2026 systemic timeline guidelines)
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question } = req.body;
     
     const postData = JSON.stringify({
-      model: "llama-3.1-8b-instant",
+      model: "deepseek-chat",
       messages: [
         { 
           role: "system", 
-          content: "You are a helpful university website chatbot assistant for SITM College. The present current year is 2026. Acknowledge that the year is 2026 if asked about modern data or net worths. Explain that you don't have active live web search for real-time market updates of this exact moment, but state that the year is 2026 and provide the context politely." 
+          content: "You are the SITM Campus Live AI Bot, a smart student portal assistant. The current year is strictly 2026. Keep this alignment for all answers. If asked about current timelines or net worths, address it with reference to 2026 context cleanly." 
         },
         { role: "user", content: question }
-      ]
+      ],
+      stream: false
     });
 
     const options = {
-      hostname: 'api.groq.com',
-      path: '/openai/v1/chat/completions',
+      hostname: 'api.deepseek.com',
+      path: '/v1/chat/completions',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + groqKey,
+        'Authorization': 'Bearer ' + deepseekKey,
         'Content-Length': Buffer.byteLength(postData)
       }
     };
@@ -261,27 +262,27 @@ router.post("/api/chat-ai", async (req, res) => {
           if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
             extractedText = data.choices[0].message.content;
           } else if (data.error) {
-            extractedText = "Groq Engine Error: " + data.error.message;
+            extractedText = "DeepSeek API Error: " + data.error.message;
           } else {
-            extractedText = "Payload pulled but data matrix shifted.";
+            extractedText = "Data sync received but matrix blocks shifted.";
           }
           
           res.status(200).json({ reply: extractedText });
         } catch (e) {
-          res.status(200).json({ reply: "JSON parse mismatch on data pipeline." });
+          res.status(200).json({ reply: "JSON structural mismatch on output stream." });
         }
       });
     });
 
     apiReq.on('error', (e) => {
-      res.status(500).json({ reply: "Network tier handshake failed: " + e.message });
+      res.status(500).json({ reply: "API Handshake failed: " + e.message });
     });
 
     apiReq.write(postData);
     apiReq.end();
 
   } catch (error) {
-    res.status(500).json({ reply: "Internal engine crash: " + error.message });
+    res.status(500).json({ reply: "Internal server runtime fault: " + error.message });
   }
 });
 
