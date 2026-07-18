@@ -99,6 +99,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
+// Dynamic UI Injector Engine (With Session History Array Embedded)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -150,7 +151,7 @@ router.use((req, res, next) => {
                 <button onclick="toggleUniChat()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; font-size:1.1rem;">×</button>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Hello! I am your SITM Campus AI Assistant powered by Groq Llama 3.3. 🚀 Ask me any query!</div>
+                <div class="chat-msg bot">Hello! I am your SITM Campus AI Assistant. 🚀 I remember our conversation now! Ask me anything.</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -162,6 +163,9 @@ router.use((req, res, next) => {
 
         const chatbotLogicScript = `
           <script>
+            // Array to store active conversation session threads
+            let currentChatHistory = [];
+
             function toggleUniChat() {
               const box = document.getElementById('uniChatBox');
               const launcher = document.getElementById('uniChatLauncher');
@@ -172,22 +176,38 @@ router.use((req, res, next) => {
               }
             }
             function handleChatKey(e) { if(e.key === 'Enter') sendUniChatMessage(); }
+            
             async function sendUniChatMessage() {
               const input = document.getElementById('uniChatInput');
               const text = input.value.trim();
               if(!text) return;
+              
               appendMsg(text, 'user');
               input.value = '';
               appendMsg("⏳ Thinking...", 'bot-loading');
+              
               try {
                 const res = await fetch('/api/chat-ai', {
                   method: 'POST',
                   headers: {'Content-Type': 'application/json'},
-                  body: JSON.stringify({ question: text })
+                  body: JSON.stringify({ 
+                    question: text,
+                    history: currentChatHistory // Sends tracking data array to endpoint
+                  })
                 });
                 const out = await res.json();
                 removeLoadingMsg();
                 appendMsg(out.reply, 'bot');
+                
+                // Save context blocks inside global memory stack
+                currentChatHistory.push({ role: "user", content: text });
+                currentChatHistory.push({ role: "assistant", content: out.reply });
+                
+                // Keep history clean - save last 10 messages to avoid payload blast limits
+                if(currentChatHistory.length > 20) {
+                  currentChatHistory.shift();
+                  currentChatHistory.shift();
+                }
               } catch(err) {
                 removeLoadingMsg();
                 appendMsg("System connection delay.", 'bot');
@@ -218,20 +238,34 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 HIGH-SPEED DYNAMIC GROQ LLAMA 3.3 INTEGRATION ROUTE
+// 🎯 STATEFUL GROQ LLAMA 3.3 ROUTE (Accepts and processes continuous history packets)
 router.post("/api/chat-ai", async (req, res) => {
   try {
-    const { question } = req.body;
+    const { question, history } = req.body;
     
+    // Base configuration matrix array
+    let messagePayload = [
+      { 
+        role: "system", 
+        content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Keep this timeline alignment in mind for all responses. Maintain full continuous awareness of the conversation history provided by the user." 
+      }
+    ];
+
+    // Append past chat blocks neatly if they exist in request package
+    if (history && Array.isArray(history)) {
+      history.forEach(msg => {
+        if(msg.role && msg.content) {
+          messagePayload.push({ role: msg.role, content: msg.content });
+        }
+      });
+    }
+
+    // Push the fresh user message into active compile queue
+    messagePayload.push({ role: "user", content: question });
+
     const postData = JSON.stringify({
       model: "llama-3.3-70b-versatile",
-      messages: [
-        { 
-          role: "system", 
-          content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Keep this timeline alignment in mind for all responses. Answer all portal user queries concisely and smartly." 
-        },
-        { role: "user", content: question }
-      ]
+      messages: messagePayload
     });
 
     const options = {
@@ -256,27 +290,27 @@ router.post("/api/chat-ai", async (req, res) => {
           if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
             extractedText = data.choices[0].message.content;
           } else if (data.error) {
-            extractedText = "Engine Error: " + data.error.message;
+            extractedText = "Engine Memory Sync Error: " + data.error.message;
           } else {
-            extractedText = "Response layout mismatch.";
+            extractedText = "Response context array unaligned.";
           }
           
           res.status(200).json({ reply: extractedText });
         } catch (e) {
-          res.status(200).json({ reply: "JSON parsing mismatch on transit." });
+          res.status(200).json({ reply: "JSON parsing mismatch on memory pipeline." });
         }
       });
     });
 
     apiReq.on('error', (e) => {
-      res.status(500).json({ reply: "Network interface fault: " + e.message });
+      res.status(500).json({ reply: "Network interface memory error: " + e.message });
     });
 
     apiReq.write(postData);
     apiReq.end();
 
   } catch (error) {
-    res.status(500).json({ reply: "Server error execution tier: " + error.message });
+    res.status(500).json({ reply: "Server error execution memory tier: " + error.message });
   }
 });
 
