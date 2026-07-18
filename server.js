@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const app = express();
 
 app.use(express.json());
+const adminSettings = require("./admin-settings");
+app.use("/", adminSettings);
 
 // Hardcoded Secure MongoDB Connection
 const MONGO_URI = "mongodb+srv://sumitsharma17361_db_user:S26CzHyqdBgLuFuw@cluster0.ihz6w8n.mongodb.net/?appName=Cluster0";
