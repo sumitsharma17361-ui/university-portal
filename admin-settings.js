@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-// Native HTTPS module ka use (Bina kisi library crash ke)
+// Native HTTPS module (Bina kisi library crash ke)
 const https = require("https");
 
 // Database Schema for Credentials
@@ -12,8 +12,8 @@ const credentialSchema = new mongoose.Schema({
 
 const Credential = mongoose.models.Credential || mongoose.model("Credential", credentialSchema);
 
-// 🔑 AAPKI LIVE GEMINI API KEY YAHAN INJECT HO GAYI HAI
-const aiKey = "AQ.Ab8RN6IxTKrK1z75wmVnZ0jwuGubyfypSbVP68u50zhwAd5utA"; 
+// 🔑 AAPKI LIVE POORI GEMINI API KEY YAHAN INJECT HO GAYI HAI
+const aiKey = "AQ.Ab8RN6KBVNPzU28amGyL3Vz_ZnKERdgPHomV4ptzRjYTMuhFxQ"; 
 
 // HTML settings portal interface
 router.get("/admin-settings", (req, res) => {
@@ -89,7 +89,7 @@ router.get("/admin-settings", (req, res) => {
   `);
 });
 
-// Password Update API
+// Password Update Endpoint
 router.post("/api/update-portal-password", async (req, res) => {
   try {
     const { role, token, password } = req.body;
@@ -223,7 +223,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// Advanced Parsing Architecture Endpoint
+// 🎯 DUAL STREAM AUTHENTICATION ENGINE
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question } = req.body;
@@ -234,10 +234,11 @@ router.post("/api/chat-ai", async (req, res) => {
 
     const options = {
       hostname: 'generativelanguage.googleapis.com',
-      path: '/v1beta/models/gemini-1.5-flash:generateContent?key=' + aiKey,
+      path: '/v1beta/models/gemini-1.5-flash:generateContent',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'x-goog-api-key': aiKey, // Naye AQ token format ke liye exact custom validation header
         'Content-Length': Buffer.byteLength(postData)
       }
     };
@@ -250,26 +251,25 @@ router.post("/api/chat-ai", async (req, res) => {
           const data = JSON.parse(responseBody);
           let extractedText = "";
           
-          // Triple layer object checking logic
           if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0]) {
             extractedText = data.candidates[0].content.parts[0].text;
           } else if (data.text) {
             extractedText = data.text;
           } else if (data.error) {
-            extractedText = "Google API Error Alert: " + data.error.message;
+            extractedText = "API System Alert: " + data.error.message;
           } else {
-            extractedText = "Response pulled successfully but no data streams matching.";
+            extractedText = "Response packet verified but internal text blocks empty.";
           }
           
           res.status(200).json({ reply: extractedText });
         } catch (e) {
-          res.status(200).json({ reply: "JSON Structural error on payload translation." });
+          res.status(200).json({ reply: "Connection authorized, but JSON parsing stream mismatch." });
         }
       });
     });
 
     apiReq.on('error', (e) => {
-      res.status(500).json({ reply: "Network error on handshake: " + e.message });
+      res.status(500).json({ reply: "Handshake error on secure socket: " + e.message });
     });
 
     apiReq.write(postData);
