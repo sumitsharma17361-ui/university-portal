@@ -99,7 +99,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic UI Injector Engine (With Session History Array Embedded)
+// Dynamic UI Injector Engine (With LocalStorage Persistent Memory Stack)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -151,7 +151,7 @@ router.use((req, res, next) => {
                 <button onclick="toggleUniChat()" style="background:none; border:none; color:white; cursor:pointer; font-weight:bold; font-size:1.1rem;">×</button>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Hello! I am your SITM Campus AI Assistant. 🚀 I remember our conversation now! Ask me anything.</div>
+                <div class="chat-msg bot">Hello! I am your SITM Campus AI Assistant. 🚀 I now have permanent memory! Even if you refresh, I won't forget.</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -163,8 +163,23 @@ router.use((req, res, next) => {
 
         const chatbotLogicScript = `
           <script>
-            // Array to store active conversation session threads
-            let currentChatHistory = [];
+            // Persistent Memory Array Linked with LocalStorage
+            let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
+
+            // On Page Reload, rendering older logs back safely
+            window.addEventListener('DOMContentLoaded', () => {
+              const logs = document.getElementById('uniChatLogs');
+              if(currentChatHistory.length > 0) {
+                currentChatHistory.forEach(msg => {
+                  const type = msg.role === 'user' ? 'user' : 'bot';
+                  const div = document.createElement('div');
+                  div.className = 'chat-msg ' + type;
+                  div.innerText = msg.content;
+                  logs.appendChild(div);
+                });
+                logs.scrollTop = logs.scrollHeight;
+              }
+            });
 
             function toggleUniChat() {
               const box = document.getElementById('uniChatBox');
@@ -192,22 +207,25 @@ router.use((req, res, next) => {
                   headers: {'Content-Type': 'application/json'},
                   body: JSON.stringify({ 
                     question: text,
-                    history: currentChatHistory // Sends tracking data array to endpoint
+                    history: currentChatHistory 
                   })
                 });
                 const out = await res.json();
                 removeLoadingMsg();
                 appendMsg(out.reply, 'bot');
                 
-                // Save context blocks inside global memory stack
+                // Commit updates to history stack
                 currentChatHistory.push({ role: "user", content: text });
                 currentChatHistory.push({ role: "assistant", content: out.reply });
                 
-                // Keep history clean - save last 10 messages to avoid payload blast limits
-                if(currentChatHistory.length > 20) {
-                  currentChatHistory.shift();
-                  currentChatHistory.shift();
+                // Prune old tokens to fit context limits (Keep last 14 logs)
+                if(currentChatHistory.length > 28) {
+                  currentChatHistory.shift(); currentChatHistory.shift();
                 }
+                
+                // Save context directly into the browser storage drive
+                localStorage.setItem('sitm_chat_memory', JSON.stringify(currentChatHistory));
+                
               } catch(err) {
                 removeLoadingMsg();
                 appendMsg("System connection delay.", 'bot');
@@ -238,12 +256,11 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 STATEFUL GROQ LLAMA 3.3 ROUTE (Accepts and processes continuous history packets)
+// 🎯 DYNAMIC STATEFUL ENGINE TIER WITH TIME FRAME MATRIX 2026
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history } = req.body;
     
-    // Base configuration matrix array
     let messagePayload = [
       { 
         role: "system", 
@@ -251,7 +268,6 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     ];
 
-    // Append past chat blocks neatly if they exist in request package
     if (history && Array.isArray(history)) {
       history.forEach(msg => {
         if(msg.role && msg.content) {
@@ -260,7 +276,6 @@ router.post("/api/chat-ai", async (req, res) => {
       });
     }
 
-    // Push the fresh user message into active compile queue
     messagePayload.push({ role: "user", content: question });
 
     const postData = JSON.stringify({
@@ -290,28 +305,29 @@ router.post("/api/chat-ai", async (req, res) => {
           if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
             extractedText = data.choices[0].message.content;
           } else if (data.error) {
-            extractedText = "Engine Memory Sync Error: " + data.error.message;
+            extractedText = "Engine Error: " + data.error.message;
           } else {
-            extractedText = "Response context array unaligned.";
+            extractedText = "Response matrix shifting error.";
           }
           
           res.status(200).json({ reply: extractedText });
         } catch (e) {
-          res.status(200).json({ reply: "JSON parsing mismatch on memory pipeline." });
+          res.status(200).json({ reply: "JSON structural alignment issue." });
         }
       });
     });
 
     apiReq.on('error', (e) => {
-      res.status(500).json({ reply: "Network interface memory error: " + e.message });
+      res.status(500).json({ reply: "Handshake transmission failure: " + e.message });
     });
 
     apiReq.write(postData);
     apiReq.end();
 
   } catch (error) {
-    res.status(500).json({ reply: "Server error execution memory tier: " + error.message });
+    res.status(500).json({ reply: "Internal tracking stack error: " + error.message });
   }
 });
 
 module.exports = router;
+            
