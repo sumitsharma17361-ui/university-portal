@@ -160,8 +160,8 @@ app.get("/", (req, res) => {
       </div>
 
       <div class="main-nav" id="mainNav">
-        <button class="nav-btn active" onclick="switchTab('student')">🧑‍🎓 Student Desk</button>
-        <button class="nav-btn" onclick="switchTab('teacher')">🛡️ Staff Login</button>
+        <button class="nav-btn active" id="btnTabStudent" onclick="switchTab('student')">🧑‍🎓 Student Desk</button>
+        <button class="nav-btn" id="btnTabTeacher" onclick="switchTab('teacher')">🛡️ Staff Login</button>
       </div>
 
       <!-- STUDENT PORTAL -->
@@ -240,14 +240,19 @@ app.get("/", (req, res) => {
 
       <script>
         let currentRole = "";
+        
         function switchTab(tab) {
-          document.querySelectorAll('.card').forEach(c => c.classList.remove('visible'));
-          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+          document.getElementById('studentCard').classList.remove('visible');
+          document.getElementById('teacherAuthCard').classList.remove('visible');
+          document.getElementById('teacherDashboardCard').classList.remove('visible');
+          document.getElementById('btnTabStudent').classList.remove('active');
+          document.getElementById('btnTabTeacher').classList.remove('active');
+          
           if(tab === 'student') {
-            document.querySelectorAll('.nav-btn')[0].classList.add('active');
+            document.getElementById('btnTabStudent').classList.add('active');
             document.getElementById('studentCard').classList.add('visible');
           } else {
-            document.querySelectorAll('.nav-btn')[1].classList.add('active');
+            document.getElementById('btnTabTeacher').classList.add('active');
             document.getElementById('teacherAuthCard').classList.add('visible');
           }
         }
@@ -272,7 +277,7 @@ app.get("/", (req, res) => {
             document.getElementById('teacherAuthCard').classList.remove('visible');
             document.getElementById('teacherDashboardCard').classList.add('visible');
             document.getElementById('mainNav').style.display = 'none';
-          }, 500);
+          }, 400);
         }
 
         function logoutTeacher() {
@@ -304,12 +309,9 @@ app.get("/", (req, res) => {
             const res = await fetch('/api/all-results');
             const out = await res.json();
             if(out.success && out.data.length > 0) {
-              list.innerHTML = out.data.map(d => 
-                '<div class="record-item">' +
-                  '<b>👤 ' + d.name + ' (Roll: ' + d.roll + ')</b><br>' +
-                  '📞 ' + (d.phone || 'N/A') + ' | 🏠 ' + (d.address || 'N/A') +
-                '</div>'
-              ).join('');
+              list.innerHTML = out.data.map(function(d) {
+                return '<div class="record-item"><b>👤 ' + d.name + ' (Roll: ' + d.roll + ')</b><br>📞 ' + (d.phone || 'N/A') + ' | 🏠 ' + (d.address || 'N/A') + '</div>';
+              }).join('');
               container.style.display = 'block';
             }
           } catch(err) { alert("Error connecting database cluster."); }
