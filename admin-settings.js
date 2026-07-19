@@ -87,7 +87,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injection Layer (Dark Theme + Strict Live Token Binding)
+// Dynamic Injection Layer (Strict Live State Validation)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -138,23 +138,33 @@ router.use((req, res, next) => {
         const chatbotLogicScript = `
           <script>
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
-            
+            window.activeSessionRoleGlobal = "Student";
+
+            // Hard core active check loop to force destruction of roles on logout
             setInterval(() => {
-              // DOM elements extraction from the parent page session layout shell
               const activeBadge = document.getElementById('roleBadge') || document.querySelector('.user-role-text');
               const titleEl = document.getElementById('uniBotTitle');
               
-              // Hard security injection variable mapping
-              window.activeSessionRoleGlobal = "";
-              if (activeBadge && activeBadge.innerText.trim() && !activeBadge.innerText.toLowerCase().includes("student")) {
-                const computedRole = activeBadge.innerText.trim();
-                titleEl.innerText = "🛡️ Professor Console (" + computedRole + ")";
-                window.activeSessionRoleGlobal = computedRole;
+              let foundRoleText = "";
+              if (activeBadge && activeBadge.innerText) {
+                foundRoleText = activeBadge.innerText.trim().toLowerCase();
+              }
+
+              // Strict validation block
+              if (foundRoleText && (foundRoleText.includes("teacher") || foundRoleText.includes("admin") || foundRoleText.includes("professor"))) {
+                // If dashboard structure displays teacher frame natively
+                const displayRole = foundRoleText.includes("admin") ? "Admin" : "Teacher";
+                titleEl.innerText = "🛡️ Professor Console (" + displayRole + ")";
+                window.activeSessionRoleGlobal = displayRole;
               } else {
+                // Force drop context immediately if UI role badge falls out or says student
                 titleEl.innerText = "🏫 SITM Portal Assistant";
                 window.activeSessionRoleGlobal = "Student";
+                if (typeof currentRole !== 'undefined') {
+                  currentRole = "Student"; // Reset shell engine variables
+                }
               }
-            }, 1000);
+            }, 500);
 
             window.addEventListener('DOMContentLoaded', () => {
               const logs = document.getElementById('uniChatLogs');
@@ -186,7 +196,7 @@ router.use((req, res, next) => {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
               
-              // Extract highly precise authorization session status directly
+              // Dynamic runtime authentication enforcement
               const currentActiveRole = window.activeSessionRoleGlobal || "Student";
 
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
@@ -215,7 +225,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY (FORCED ACCREDITATION COMPLIANCE STACK)
+// 🎯 MAIN ROUTER ENTRY (ENFORCED COMPLIANCE STACK)
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history, portalRole } = req.body;
@@ -225,12 +235,12 @@ router.post("/api/chat-ai", async (req, res) => {
     const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set");
     const hasAuthorizedPortalSession = (portalRole === "Teacher" || portalRole === "Admin" || portalRole === "Professor") || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
-    // Hard Core Security Verification Check: Block any update requests from Student layouts
+    // 🔴 THE IRONCLAD GATEKEEPER: Pure verification breakdown
     if (isTeacherIntendingUpload && !hasAuthorizedPortalSession) {
       return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating cloud cluster records." });
     }
 
-    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC (Strictly Guarded)
+    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC (Guarded)
     if (isTeacherIntendingUpload && hasAuthorizedPortalSession && (lowerQ.includes("java") || lowerQ.includes("rprog") || lowerQ.includes("os") || lowerQ.includes("coa") || lowerQ.includes("unix"))) {
       const allNumbers = question.match(/\d+/g);
       const rollMatch = question.match(/(?:roll|no|number)\s*[:\s]*(\d+)/i) || (allNumbers ? { 1: allNumbers[0] } : null);
@@ -260,7 +270,7 @@ router.post("/api/chat-ai", async (req, res) => {
               const sub = updatedDoc.subjects;
               const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
               return res.status(200).json({ 
-                reply: `🎯 Live Update Applied Successfully!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ke database mein ${updateField.split('.')[1]} ko update karke ${targetScore} kar diya hai.` 
+                reply: `🎯 Live Update Applied Successfully!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ke database mein os ko update karke ${targetScore} kar diya hai.` 
               });
             } else {
               return res.status(200).json({ reply: `❌ Roll Number ${targetRoll} pehle se database mein exist nahi karta hai.` });
@@ -319,8 +329,8 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Strictly Strip out Injection Triggers)
-    let messagePayload = [{ role: "system", content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Guide portal users concisely. If a user asks to change, mutate, or update scores without authorized credentials, state that they lack structural authorization permissions." }];
+    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK
+    let messagePayload = [{ role: "system", content: "You are the SITM Campus AI Assistant. Keep answers brief. Current year is strictly 2026." }];
     if (history && Array.isArray(history)) {
       history.forEach(m => { if(m.role && m.content) messagePayload.push({ role: m.role, content: m.content }); });
     }
