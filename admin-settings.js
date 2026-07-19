@@ -87,7 +87,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injection Layer
+// Dynamic Premium Injection Layer (Dark Theme + Live Context Binding)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -95,20 +95,21 @@ router.use((req, res, next) => {
       if (typeof html === "string") {
         const themeAndChatStyles = `
           <style>
-            body { background-color: #f0f4f8 !important; color: #1e293b !important; }
             #uniChatbotContainer { position: fixed; bottom: 20px; right: 20px; z-index: 99999; font-family: 'Segoe UI', sans-serif; }
-            #uniChatLauncher { background: #0284c7; color: white; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; }
-            #uniChatBox { width: 340px; height: 430px; background: white; border: 1px solid #cbd5e1; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); display: none; flex-direction: column; overflow: hidden; }
-            .chat-header { background: #0284c7; color: white; padding: 15px; font-weight: 600; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; }
-            .chat-header-actions { display: flex; align-items: center; gap: 12px; }
-            .chat-action-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.1rem; }
-            .chat-logs { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; font-size: 0.85rem; }
-            .chat-msg { padding: 8px 12px; border-radius: 12px; max-width: 80%; line-height: 1.4; white-space: pre-wrap; }
-            .chat-msg.bot { background: #e2e8f0; color: #0f172a; align-self: flex-start; }
-            .chat-msg.user { background: #e0f2fe; color: #0284c7; align-self: flex-end; }
-            .chat-input-area { display: flex; padding: 10px; border-top: 1px solid #e2e8f0; background: white; }
-            .chat-input-area input { flex: 1; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; color: #0f172a !important; background: #fff !important; }
-            .chat-send-btn { background: #0284c7; color: white; border: none; padding: 0 14px; margin-left: 8px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+            #uniChatLauncher { background: #38bdf8; color: #0f172a; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4); }
+            #uniChatBox { width: 340px; height: 440px; background: #1e293b; border: 1px solid #334155; border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.5); display: none; flex-direction: column; overflow: hidden; }
+            .chat-header { background: #0f172a; color: #38bdf8; padding: 15px; font-weight: 600; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+            .chat-header-actions { display: flex; align-items: center; gap: 14px; }
+            .chat-action-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.1rem; }
+            .chat-action-btn:hover { color: #f8fafc; }
+            .chat-logs { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #0f172a; font-size: 0.85rem; }
+            .chat-msg { padding: 10px 14px; border-radius: 12px; max-width: 85%; line-height: 1.4; white-space: pre-wrap; }
+            .chat-msg.bot { background: #1e293b; color: #f8fafc; align-self: flex-start; border: 1px solid #334155; }
+            .chat-msg.user { background: #38bdf8; color: #0f172a; align-self: flex-end; font-weight: 500; }
+            .chat-input-area { display: flex; padding: 12px; border-top: 1px solid #334155; background: #1e293b; }
+            .chat-input-area input { flex: 1; border: 1px solid #475569; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; color: #f8fafc !important; background: #0f172a !important; }
+            .chat-input-area input:focus { outline: none; border-color: #38bdf8; }
+            .chat-send-btn { background: #38bdf8; color: #0f172a; border: none; padding: 0 16px; margin-left: 8px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
           </style>
         `;
 
@@ -117,14 +118,14 @@ router.use((req, res, next) => {
             <button id="uniChatLauncher" onclick="toggleUniChat()">💬</button>
             <div id="uniChatBox">
               <div class="chat-header">
-                <span>🏫 SITM Live DB Assistant</span>
+                <span id="uniBotTitle">🏫 SITM Portal Assistant</span>
                 <div class="chat-header-actions">
                   <button title="Clear Conversation" class="chat-action-btn" onclick="clearUniChatMemory()">🗑️</button>
-                  <button class="chat-action-btn" onclick="toggleUniChat()">×</button>
+                  <button class="chat-action-btn" onclick="toggleUniChat()" style="font-weight:bold;">×</button>
                 </div>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Hello! I am your SITM Database Assistant. 🚀 Give a roll number to check marks, or provide data with a secure pin to upload results!</div>
+                <div class="chat-msg bot">Hello! I am your SITM Database Integrated Assistant. 🚀 Give a roll number to check performance analytics instantly!</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -137,6 +138,18 @@ router.use((req, res, next) => {
         const chatbotLogicScript = `
           <script>
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
+            
+            // Sync with active portal session roles seamlessly
+            setInterval(() => {
+              const activeBadge = document.getElementById('roleBadge');
+              const titleEl = document.getElementById('uniBotTitle');
+              if (activeBadge && activeBadge.innerText.trim()) {
+                titleEl.innerText = "🛡️ Professor Console (" + activeBadge.innerText.trim() + ")";
+              } else {
+                titleEl.innerText = "🏫 SITM Portal Assistant";
+              }
+            }, 1000);
+
             window.addEventListener('DOMContentLoaded', () => {
               const logs = document.getElementById('uniChatLogs');
               if(currentChatHistory.length > 0) {
@@ -150,6 +163,7 @@ router.use((req, res, next) => {
                 logs.scrollTop = logs.scrollHeight;
               }
             });
+
             function toggleUniChat() {
               const box = document.getElementById('uniChatBox'), l = document.getElementById('uniChatLauncher');
               if(box.style.display === 'none' || !box.style.display) { box.style.display = 'flex'; l.style.display = 'none'; }
@@ -157,28 +171,33 @@ router.use((req, res, next) => {
             }
             function handleChatKey(e) { if(e.key === 'Enter') sendUniChatMessage(); }
             function clearUniChatMemory() {
-              if(confirm("Delete history?")) {
+              if(confirm("Wipe conversation data?")) {
                 localStorage.removeItem('sitm_chat_memory'); currentChatHistory = [];
-                document.getElementById('uniChatLogs').innerHTML = '<div class="chat-msg bot">Memory cleared!</div>';
+                document.getElementById('uniChatLogs').innerHTML = '<div class="chat-msg bot">Context flushed cleanly. Ask me anything fresh!</div>';
               }
             }
             async function sendUniChatMessage() {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
+              
+              // Extract role token context from main UI shell framework variables
+              const currentActiveRole = typeof currentRole !== 'undefined' ? currentRole : "";
+
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
-              const load = document.createElement('div'); load.className = 'chat-msg bot'; load.innerText = '⏳ Processing...'; logs.appendChild(load); logs.scrollTop = logs.scrollHeight;
+              const load = document.createElement('div'); load.className = 'chat-msg bot'; load.innerText = '⏳ Syncing Data...'; logs.appendChild(load); logs.scrollTop = logs.scrollHeight;
+              
               try {
                 const res = await fetch('/api/chat-ai', {
                   method: 'POST',
                   headers: {'Content-Type': 'application/json'},
-                  body: JSON.stringify({ question: text, history: currentChatHistory })
+                  body: JSON.stringify({ question: text, history: currentChatHistory, portalRole: currentActiveRole })
                 });
                 const out = await res.json(); load.remove();
                 const b = document.createElement('div'); b.className = 'chat-msg bot'; b.innerText = out.reply; logs.appendChild(b);
                 currentChatHistory.push({ role: "user", content: text }); currentChatHistory.push({ role: "assistant", content: out.reply });
                 if(currentChatHistory.length > 20) { currentChatHistory.shift(); currentChatHistory.shift(); }
                 localStorage.setItem('sitm_chat_memory', JSON.stringify(currentChatHistory)); logs.scrollTop = logs.scrollHeight;
-              } catch(err) { load.innerText = "Connection delay."; }
+              } catch(err) { load.innerText = "Transmission loss."; }
             }
           </script>
         `;
@@ -190,40 +209,75 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY LINKED VIA EXISTING INSTANCE DECOYS
+// 🎯 MAIN ROUTER ENTRY WITH BOTH MARKS AND DEFAULT ENGINE CAPABILITY
 router.post("/api/chat-ai", async (req, res) => {
   try {
-    const { question, history } = req.body;
+    const { question, history, portalRole } = req.body;
     const lowerQ = question.toLowerCase();
-    
-    // Dynamically access compiled global student registry model from memory tree
     const StudentModel = mongoose.model("Student");
 
-    // 1. Search Marks Logic
+    // 1. Advanced Analytics Search Marks Logic
     if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
       const match = question.match(/\d+/);
       if (match) {
         const d = await StudentModel.findOne({ roll: match[0] });
         if (d) {
-          const total = d.subjects.java + d.subjects.rProg + d.subjects.os + d.subjects.coa + d.subjects.unixLinux;
-          return res.status(200).json({ reply: `📊 *Result Found (Roll: ${d.roll})*\n\n👤 Name: ${d.name}\n📚 Course: ${d.course}\n---------------------------\n🔹 Java: ${d.subjects.java}\n🔹 R Prog: ${d.subjects.rProg}\n🔹 OS: ${d.subjects.os}\n🔹 COA: ${d.subjects.coa}\n🔹 Unix: ${d.subjects.unixLinux}\n---------------------------\n🏆 Total: ${total}/500 (${((total/500)*100).toFixed(2)}%)` });
+          const sub = d.subjects;
+          const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
+          const pct = ((total / 500) * 100).toFixed(2);
+          
+          // 📉 High-Performance Analytics Array Parsing Engine
+          const subArray = [
+            { name: "Java Programming", score: sub.java },
+            { name: "R Programming", score: sub.rProg },
+            { name: "Operating Systems", score: sub.os },
+            { name: "Computer Org & Arch", score: sub.coa },
+            { name: "Unix / Linux Lab", score: sub.unixLinux }
+          ];
+
+          let highestSub = subArray[0];
+          let failedSubjects = [];
+          
+          subArray.forEach(s => {
+            if (s.score > highestSub.score) highestSub = s;
+            if (s.score < 33) failedSubjects.push(`${s.name} (${s.score}/100)`);
+          });
+
+          const status = failedSubjects.length > 0 ? `🔴 FAILED / BACK (${failedSubjects.length} Subject)` : "🟢 PASSED SECURELY";
+          const backDetails = failedSubjects.length > 0 ? `⚠️ Back Details:\n- ${failedSubjects.join("\n- ")}` : "🎉 Performance Status: Excellent! Clear clear pass.";
+
+          const formattedReply = `📊 *Performance Card (Roll: ${d.roll})*\n` +
+                                 `👤 Name: ${d.name}\n` +
+                                 `---------------------------\n` +
+                                 `🔹 Java: ${sub.java}/100\n` +
+                                 `🔹 R Prog: ${sub.rProg}/100\n` +
+                                 `🔹 OS: ${sub.os}/100\n` +
+                                 `🔹 COA: ${sub.coa}/100\n` +
+                                 `🔹 Unix: ${sub.unixLinux}/100\n` +
+                                 `---------------------------\n` +
+                                 `📈 Grand Total: ${total}/500 (${pct}%)\n` +
+                                 `⚖️ Status: ${status}\n\n` +
+                                 `⭐ Highest Subject: ${highestSub.name} (${highestSub.score}/100)\n` +
+                                 `${backDetails}`;
+
+          return res.status(200).json({ reply: formattedReply });
         }
-        return res.status(200).json({ reply: `❌ Roll Number ${match[0]} ka data server cluster par nahi mila.` });
+        return res.status(200).json({ reply: `❌ Roll Number ${match[0]} ka performance data database cluster par active nahi mila.` });
       }
     }
 
-    // 2. Add Marks Logic
-    if ((lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload")) && lowerQ.includes("pin")) {
-      const pinM = question.match(/pin:\s*([^\s,]+)/i), rollM = question.match(/roll:\s*([^\s,]+)/i);
+    // 2. Intelligent Auto-Authenticated Teacher Upload Logic
+    const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload");
+    const hasAuthorizedPortalSession = portalRole === "Teacher" || portalRole === "Admin" || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
+
+    if (isTeacherIntendingUpload && hasAuthorizedPortalSession) {
+      const rollM = question.match(/roll:\s*([^\s,]+)/i);
       const nameM = question.match(/name:\s*([^,]+)/i), dobM = question.match(/dob:\s*([^\s,]+)/i);
       const jM = question.match(/java:\s*(\d+)/i), rM = question.match(/rprog:\s*(\d+)/i);
       const oM = question.match(/os:\s*(\d+)/i), cM = question.match(/coa:\s*(\d+)/i), uM = question.match(/unix:\s*(\d+)/i);
 
-      if (!pinM || !rollM || !nameM || !dobM) {
-        return res.status(200).json({ reply: "❌ Form Mismatch! Try this strict structure:\nAdd result roll: 12, pin: cse_teacher_2026, name: Sumit, dob: 22/08/2005, java: 90, rprog: 85, os: 80, coa: 75, unix: 95" });
-      }
-      if (pinM[1].trim() !== "cse_teacher_2026" && pinM[1].trim() !== "admin_secure_2026") {
-        return res.status(200).json({ reply: "❌ Security Mismatch: Action unauthorized." });
+      if (!rollM || !nameM || !dobM) {
+        return res.status(200).json({ reply: "❌ Format Mismatch! Marks add karne ka correct design structure:\n\nAdd result roll: 12, name: Sumit, dob: 22/08/2005, java: 90, rprog: 85, os: 80, coa: 75, unix: 95" });
       }
 
       await StudentModel.findOneAndUpdate({ roll: rollM[1].trim() }, {
@@ -231,14 +285,21 @@ router.post("/api/chat-ai", async (req, res) => {
         subjects: { java: jM?Number(jM[1]):0, rProg: rM?Number(rM[1]):0, os: oM?Number(oM[1]):0, coa: cM?Number(cM[1]):0, unixLinux: uM?Number(uM[1]):0 }
       }, { upsert: true });
 
-      return res.status(200).json({ reply: `✅ Verified! Roll Number ${rollM[1].trim()} records are synchronized with Cloud Database.` });
+      const executor = portalRole ? portalRole : "Staff Session";
+      return res.status(200).json({ reply: `✅ Session Verified (${executor})! Roll Number ${rollM[1].trim()} records are synchronized with Cloud Cluster database.` });
     }
 
     // 3. Regular Assistant Talk Stack
-    let messagePayload = [{ role: "system", content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Keep this in mind for all responses. Keep responses clean and brief." }];
+    let messagePayload = [{ role: "system", content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Keep this alignment in mind. Guide portal users with high intelligence and extreme precision." }];
     if (history && Array.isArray(history)) {
       history.forEach(m => { if(m.role && m.content) messagePayload.push({ role: m.role, content: m.content }); });
     }
+    
+    // Auto-Greeting adjustments for active staff login states
+    if (history.length === 0 && (portalRole === "Teacher" || portalRole === "Admin")) {
+      return res.status(200).json({ reply: `Welcome Professor! 🛡️ System detects active ${portalRole} credentials session. You can command me to search or upload results directly without entering secure authorization pins!` });
+    }
+
     messagePayload.push({ role: "user", content: question });
 
     const postData = JSON.stringify({ model: "llama-3.3-70b-versatile", messages: messagePayload });
@@ -249,13 +310,13 @@ router.post("/api/chat-ai", async (req, res) => {
       let body = ''; apiRes.on('data', (c) => body += c);
       apiRes.on('end', () => {
         try { res.status(200).json({ reply: JSON.parse(body).choices[0].message.content }); } 
-        catch (e) { res.status(200).json({ reply: "JSON transit parsing error." }); }
+        catch (e) { res.status(200).json({ reply: "JSON data structural alignment error." }); }
       });
     });
-    apiReq.on('error', (e) => res.status(500).json({ reply: "Transmission failure." }));
+    apiReq.on('error', (e) => res.status(500).json({ reply: "Transmission drop." }));
     apiReq.write(postData); apiReq.end();
-  } catch (error) { res.status(500).json({ reply: "Internal processing down." }); }
+  } catch (error) { res.status(500).json({ reply: "Internal engine operation delay." }); }
 });
 
 module.exports = router;
-                                 
+        
