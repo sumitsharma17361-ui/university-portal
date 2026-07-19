@@ -1,61 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const router = express.Router();
-const https = require("https");
-
-const groqKey = "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"; 
-
-router.get("/admin-settings", (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <title>Portal Control Center</title>
-      <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .settings-card { background: #1e293b; border: 1px solid #334155; border-radius: 16px; width: 100%; max-width: 400px; padding: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        h2 { text-align: center; color: #38bdf8; margin-bottom: 20px; font-size: 1.4rem; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
-        select, input { width: 100%; background: #0f172a; border: 1px solid #475569; border-radius: 8px; padding: 10px 14px; color: #f8fafc; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; background: #4ade80; color: #0f172a; }
-        .status-msg { margin-top: 15px; text-align: center; font-size: 0.9rem; font-weight: 600; }
-        .success { color: #4ade80; } .error { color: #f87171; }
-      </style>
-    </head>
-    <body>
-      <div class="settings-card">
-        <h2>🔑 Password Management</h2>
-        <div class="form-group">
-          <label>Select Role</label>
-          <select id="userRole"><option value="Admin">Admin</option><option value="Teacher">Teacher</option></select>
-        </div>
-        <div class="form-group">
-          <label>Master Security Token</label>
-          <input type="password" id="masterToken" placeholder="Enter master authorization pin">
-        </div>
-        <div class="form-group">
-          <label>New Password</label>
-          <input type="password" id="newPassword" placeholder="Enter new password">
-        </div>
-        <button class="btn" onclick="updatePortalPassword()">Apply Password Change</button>
-        <div id="statusUpdate" class="status-msg"></div>
-      </div>
-    </body>
-    </html>
-  `);
-});
-
-router.post("/api/update-portal-password", async (req, res) => {
-  try {
-    const { role, token, password } = req.body;
-    if (token !== "sumit_master_2026") return res.status(401).json({ success: false, message: "Invalid Token" });
-    await mongoose.model("Credential").findOneAndUpdate({ role: role }, { password: password }, { upsert: true });
-    res.status(200).json({ success: true });
-  } catch (error) { res.status(500).json({ success: false, error: error.message }); }
-});
 
 router.use((req, res, next) => {
   if (req.path === "/") {
@@ -92,7 +37,7 @@ router.use((req, res, next) => {
                 </div>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Welcome to Admission & Examination Desk! Enter Roll Number to query detailed profile data.</div>
+                <div class="chat-msg bot">Welcome! Enter a Roll Number to quickly check student details.</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -105,19 +50,7 @@ router.use((req, res, next) => {
         const chatbotLogicScript = `
           <script>
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
-            window.activeSessionRoleGlobal = "Student";
-
-            setInterval(() => {
-              const titleEl = document.getElementById('uniBotTitle');
-              if (document.body.innerText.toLowerCase().includes("records dashboard")) {
-                titleEl.innerText = "🛡️ Professor Console (Teacher)";
-                window.activeSessionRoleGlobal = "Teacher";
-              } else {
-                titleEl.innerText = "🏫 SITM Portal Assistant";
-                window.activeSessionRoleGlobal = "Student";
-              }
-            }, 300);
-
+            
             function toggleUniChat() {
               const box = document.getElementById('uniChatBox'), l = document.getElementById('uniChatLauncher');
               if(box.style.display === 'none' || !box.style.display) { box.style.display = 'flex'; l.style.display = 'none'; }
@@ -131,15 +64,14 @@ router.use((req, res, next) => {
             async function sendUniChatMessage() {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
-              const currentActiveRole = window.activeSessionRoleGlobal || "Student";
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
-              const load = document.createElement('div'); load.className = 'chat-msg bot'; load.innerText = '⏳ Processing Profile...'; logs.appendChild(load); logs.scrollTop = logs.scrollHeight;
+              const load = document.createElement('div'); load.className = 'chat-msg bot'; load.innerText = '⏳ Checking...'; logs.appendChild(load); logs.scrollTop = logs.scrollHeight;
               
               try {
                 const res = await fetch('/api/chat-ai', {
                   method: 'POST',
                   headers: {'Content-Type': 'application/json'},
-                  body: JSON.stringify({ question: text, history: currentChatHistory, portalRole: currentActiveRole })
+                  body: JSON.stringify({ question: text, history: currentChatHistory })
                 });
                 const out = await res.json(); load.remove();
                 const b = document.createElement('div'); b.className = 'chat-msg bot'; b.innerText = out.reply; logs.appendChild(b);
@@ -159,27 +91,21 @@ router.use((req, res, next) => {
 
 router.post("/api/chat-ai", async (req, res) => {
   try {
-    const { question, history, portalRole } = req.body;
-    const lowerQ = question.toLowerCase();
-    const StudentModel = mongoose.model("Student");
-
-    // Profile Lookup Engine via Chat
-    if (lowerQ.includes("roll") || lowerQ.includes("detail") || lowerQ.includes("admission")) {
-      const match = question.match(/\b\d{1,4}\b/);
-      if (match) {
-        const d = await StudentModel.findOne({ roll: match[0] });
-        if (d) {
-          return res.status(200).json({ 
-            reply: `📂 *Admission Ledger Card (Roll: ${d.roll})*\n👤 Name: ${d.name}\n📅 DOB: ${d.dob}\n🧬 Gender: ${d.gender || 'N/A'}\n\n👨‍👩‍👦 FAMILY VERIFICATION:\n- Father's Name: ${d.fatherName || 'N/A'}\n- Mother's Name: ${d.motherName || 'N/A'}\n\n📞 CONTACT & IDENTIFICATION:\n- Phone: +91 ${d.phone || 'N/A'}\n- Email: ${d.email || 'N/A'}\n- Aadhaar: XXXX-XXXX-${(d.aadhaar || '0000').slice(-4)}\n- Address: ${d.address || 'N/A'}\n\n🎓 ACADEMIC BACKGROUND:\n- 10th Score: ${d.marks10 || 'N/A'}%\n- 12th Score: ${d.marks12 || 'N/A'}%\n- Branch Allocation: ${d.course}` 
-          });
-        }
-        return res.status(200).json({ reply: `❌ Roll Number ${match[0]} ka verified record server cloud par nahi mila.` });
+    const { question } = req.body;
+    const match = question.match(/\\b\\d{1,4}\\b/);
+    if (match) {
+      const StudentModel = mongoose.model("Student");
+      const d = await StudentModel.findOne({ roll: match[0] });
+      if (d) {
+        const total = d.subjects.java + d.subjects.rProg + d.subjects.os + d.subjects.coa + d.subjects.unixLinux;
+        return res.status(200).json({ 
+          reply: \`👤 Name: \${d.name}\\n🔢 Roll: \${d.roll}\\n📅 DOB: \${d.dob}\\n📈 Grand Total: \${total}/500\` 
+        });
       }
+      return res.status(200).json({ reply: \`❌ Roll \${match[0]} ka data nahi mila.\` });
     }
-
-    // Default Fallback
-    return res.status(200).json({ reply: "SITM Server Database Active. Enter a valid Student Roll Number to query full administrative admission profile." });
-  } catch (error) { res.status(500).json({ reply: "Internal core engine glitch." }); }
+    return res.status(200).json({ reply: "SITM Database AI Desk active. System normal." });
+  } catch (error) { res.status(500).json({ reply: "Glitch detected." }); }
 });
 
 module.exports = router;
