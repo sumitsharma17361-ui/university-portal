@@ -463,7 +463,7 @@ app.get("/", (req, res) => {
           }
         }
 
-                async function downloadPDF() {
+                        async function downloadPDF() {
           const roll = document.getElementById('studentRoll').value;
           let dob = document.getElementById('studentDob').value;
           dob = dob.split('-').reverse().join('/');
@@ -504,15 +504,19 @@ app.get("/", (req, res) => {
                   jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 
-                html2pdf().set(opt).from(container).save().then(() => {
-                  container.style.display = 'none';
-                });
+                // ⏳ 500ms ka halt delay taaki pure components HTML DOM mein stable render ho sakein
+                setTimeout(() => {
+                  html2pdf().set(opt).from(container).save().then(() => {
+                    container.style.display = 'none';
+                  });
+                }, 500);
               }
             }
           } catch(err) {
             alert("PDF compiling module transmission error.");
           }
         }
+        
         
       </script>
     </body>
