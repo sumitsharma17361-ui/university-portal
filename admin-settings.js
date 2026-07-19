@@ -3,22 +3,6 @@ const mongoose = require("mongoose");
 const router = express.Router();
 const https = require("https");
 
-// Student Model Linking
-const Student = mongoose.models.Student || mongoose.model("Student", new mongoose.Schema({
-  roll: { type: String, required: true, unique: true },
-  dob: { type: String, required: true },
-  name: { type: String, required: true },
-  course: { type: String, default: "B.Tech CSE" },
-  subjects: {
-    java: { type: Number, required: true },
-    rProg: { type: Number, required: true },
-    os: { type: Number, required: true },
-    coa: { type: Number, required: true },
-    unixLinux: { type: Number, required: true }
-  },
-  uploadedAt: { type: Date, default: Date.now }
-}));
-
 // 🔑 GROQ API KEY
 const groqKey = "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"; 
 
@@ -96,7 +80,7 @@ router.post("/api/update-portal-password", async (req, res) => {
     if (token !== "sumit_master_2026") {
       return res.status(401).json({ success: false, message: "Invalid Token" });
     }
-    await mongoose.models.Credential.findOneAndUpdate({ role: role }, { password: password }, { upsert: true });
+    await mongoose.model("Credential").findOneAndUpdate({ role: role }, { password: password }, { upsert: true });
     res.status(200).json({ success: true });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -206,17 +190,20 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY WITH BOTH MARKS AND DEFAULT ENGINE CAPABILITY
+// 🎯 MAIN ROUTER ENTRY LINKED VIA EXISTING INSTANCE DECOYS
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history } = req.body;
     const lowerQ = question.toLowerCase();
+    
+    // Dynamically access compiled global student registry model from memory tree
+    const StudentModel = mongoose.model("Student");
 
     // 1. Search Marks Logic
     if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
       const match = question.match(/\d+/);
       if (match) {
-        const d = await Student.findOne({ roll: match[0] });
+        const d = await StudentModel.findOne({ roll: match[0] });
         if (d) {
           const total = d.subjects.java + d.subjects.rProg + d.subjects.os + d.subjects.coa + d.subjects.unixLinux;
           return res.status(200).json({ reply: `📊 *Result Found (Roll: ${d.roll})*\n\n👤 Name: ${d.name}\n📚 Course: ${d.course}\n---------------------------\n🔹 Java: ${d.subjects.java}\n🔹 R Prog: ${d.subjects.rProg}\n🔹 OS: ${d.subjects.os}\n🔹 COA: ${d.subjects.coa}\n🔹 Unix: ${d.subjects.unixLinux}\n---------------------------\n🏆 Total: ${total}/500 (${((total/500)*100).toFixed(2)}%)` });
@@ -239,7 +226,7 @@ router.post("/api/chat-ai", async (req, res) => {
         return res.status(200).json({ reply: "❌ Security Mismatch: Action unauthorized." });
       }
 
-      await Student.findOneAndUpdate({ roll: rollM[1].trim() }, {
+      await StudentModel.findOneAndUpdate({ roll: rollM[1].trim() }, {
         name: nameM[1].trim(), dob: dobM[1].trim(), uploadedAt: new Date(),
         subjects: { java: jM?Number(jM[1]):0, rProg: rM?Number(rM[1]):0, os: oM?Number(oM[1]):0, coa: cM?Number(cM[1]):0, unixLinux: uM?Number(uM[1]):0 }
       }, { upsert: true });
@@ -271,3 +258,4 @@ router.post("/api/chat-ai", async (req, res) => {
 });
 
 module.exports = router;
+                                 
