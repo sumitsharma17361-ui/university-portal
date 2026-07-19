@@ -140,11 +140,9 @@ router.use((req, res, next) => {
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
             
             setInterval(() => {
-              // DOM elements extraction from the parent page session layout shell
               const activeBadge = document.getElementById('roleBadge') || document.querySelector('.user-role-text');
               const titleEl = document.getElementById('uniBotTitle');
               
-              // Hard security injection variable mapping
               window.activeSessionRoleGlobal = "";
               if (activeBadge && activeBadge.innerText.trim() && !activeBadge.innerText.toLowerCase().includes("student")) {
                 const computedRole = activeBadge.innerText.trim();
@@ -186,7 +184,6 @@ router.use((req, res, next) => {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
               
-              // Extract highly precise authorization session status directly
               const currentActiveRole = window.activeSessionRoleGlobal || "Student";
 
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
@@ -223,32 +220,14 @@ router.post("/api/chat-ai", async (req, res) => {
     const StudentModel = mongoose.model("Student");
 
     const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set");
-    const isTeacherIntendingDelete = lowerQ.includes("delete") || lowerQ.includes("remove") || lowerQ.includes("hata") || lowerQ.includes("clear record");
-    
     const hasAuthorizedPortalSession = (portalRole === "Teacher" || portalRole === "Admin" || portalRole === "Professor") || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
-    // 🛑 Security Check for Mutating/Deleting Cloud Records
-    if ((isTeacherIntendingUpload || isTeacherIntendingDelete) && !hasAuthorizedPortalSession) {
-      return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating or deleting cloud cluster records." });
+    // Hard Core Security Verification Check: Block any update requests from Student layouts
+    if (isTeacherIntendingUpload && !hasAuthorizedPortalSession) {
+      return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating cloud cluster records." });
     }
 
-    // ⭐ PRIORITY 0: REAL-TIME HARD DELETION LOGIC (Chatbot Command Dynamic Execution)
-    if (isTeacherIntendingDelete && hasAuthorizedPortalSession) {
-      const match = question.match(/\d+/);
-      if (match) {
-        const targetRoll = match[0];
-        const deletedDoc = await StudentModel.findOneAndDelete({ roll: targetRoll });
-        if (deletedDoc) {
-          return res.status(200).json({ 
-            reply: `🗑️ **[DATABASE MUTATION SUCCESS]**\n\nRoll Number ${targetRoll} (${deletedDoc.name}) ka profile record MongoDB cloud cluster se permanently delete kar diya gaya hai! Ab list refresh karke check karein.` 
-          });
-        } else {
-          return res.status(200).json({ reply: `❌ Roll Number ${targetRoll} database cluster mein mila hi nahi, shayad pehle hi deleted hai.` });
-        }
-      }
-    }
-
-    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC
+    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC (Strictly Guarded)
     if (isTeacherIntendingUpload && hasAuthorizedPortalSession && (lowerQ.includes("java") || lowerQ.includes("rprog") || lowerQ.includes("os") || lowerQ.includes("coa") || lowerQ.includes("unix"))) {
       const allNumbers = question.match(/\d+/g);
       const rollMatch = question.match(/(?:roll|no|number)\s*[:\s]*(\d+)/i) || (allNumbers ? { 1: allNumbers[0] } : null);
@@ -326,20 +305,18 @@ router.post("/api/chat-ai", async (req, res) => {
             if (s.score < 33) failedSubjects.push(`${s.name} (${s.score}/100)`);
           });
 
-          const status = failedSubjects.length > 0 ? `🔴 FAILED / BACK (${failedSubjects.length} Subject)` : "🟢 PASSED SECURELY";
-          const backDetails = failedSubjects.length > 0 ? `⚠️ Back Details:\n- ${failedSubjects.join("\n- ")}` : "🎉 Performance Status: Excellent! Clear pass.";
+          const status = failedSubjects.length > 0 ? `FAILED / BACK (${failedSubjects.length} Subject)` : "PASSED SECURELY";
+          const backDetails = failedSubjects.length > 0 ? `Back Details:\n- ${failedSubjects.join("\n- ")}` : "Performance Status: Excellent! Clear pass.";
 
           return res.status(200).json({ 
-            reply: `📊 *Performance Card (Roll: ${d.roll})*\n👤 Name: ${d.name}\n---------------------------\n🔹 Java: ${sub.java}/100\n🔹 R Prog: ${sub.rProg}/100\n🔹 OS: ${sub.os}/100\n🔹 COA: ${sub.coa}/100\n🔹 Unix: ${sub.unixLinux}/100\n---------------------------\n📈 Grand Total: ${total}/500 (${pct}%)\n⚖️ Status: ${status}\n\n⭐ Highest Subject: ${highestSub.name} (${highestSub.score}/100)\n${backDetails}` 
+            reply: `Performance Card (Roll: ${d.roll})\nName: ${d.name}\n---------------------------\nJava: ${sub.java}/100\nR Prog: ${sub.rProg}/100\nOS: ${sub.os}/100\nCOA: ${sub.coa}/100\nUnix: ${sub.unixLinux}/100\n---------------------------\nGrand Total: ${total}/500 (${pct}%)\nStatus: ${status}\n\nHighest Subject: ${highestSub.name} (${highestSub.score}/100)\n${backDetails}` 
           });
         }
-        return res.status(200).json({ reply: `❌ Roll Number ${match[0]} ka performance data database cluster par active nahi mila.` });
+        return res.status(200).json({ reply: `Roll Number ${match[0]} ka performance data database cluster par active nahi mila.` });
       }
     }
 
-
-
-            // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (AURA Mode - Full Date & Day Engine)
+    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (AURA Mode - Full Date & Day Engine)
     const currentServerDate = new Date().toLocaleDateString('en-US', { 
       weekday: 'long', 
       day: 'numeric', 
@@ -351,18 +328,23 @@ router.post("/api/chat-ai", async (req, res) => {
       role: "system", 
       content: `You are AURA, a smart, interactive, and highly advanced AI Assistant built for students and teachers using this examination portal. 
 
-Today's current live date and day is strictly ${currentServerDate}. Always answer date and day queries accurately using this provided timestamp. Your job is to provide accurate answers to the user's questions, whether they are asking about coding (Java, R, OS, COA, Unix), general knowledge, or everyday topics.
+Today's current live date and day is strictly ${currentServerDate}. Always answer date and day queries accurately using this provided timestamp. 
+
+DATABASE INTEGRITY CRITICAL RULE:
+- When asked to show results, scores, or student performance cards, you must ONLY read and display authentic data provided within the system context or database variables. 
+- NEVER hallucinate, fake, or fabricate imaginary student names, roll numbers, or mock marks. If a specific student's record is not actively present in the query context or database payload, politely state that the record is not found in the database.
+
+CLEAN FORMATTING & VISUAL STYLE:
+- Do NOT dump raw, ugly markdown characters like '###', '***', or double asterisks '**' around labels. 
+- Present all results and text in a beautifully clean, neat, scannable, and human-readable format using proper spacing or standard bullet lists. 
 
 CRITICAL LANGUAGE CONSTRAINT:
 - Respond STRICTLY in the exact language or style the user uses. 
-- If the user asks a question in Hinglish/Roman Hindi (e.g., "Tumhara nam kya hai"), respond ONLY in clean Hinglish without adding any brackets, English translations, or repetitive lines.
-- NEVER provide side-by-side translations. Keep it natural, direct, and single-language.
+- If the user asks a question in Hinglish/Roman Hindi (e.g., "Tumhara nam kya hai"), respond ONLY in clean, single-language Hinglish without adding any brackets, English translations, or repetitive lines. Never provide side-by-side translations.
 
-BEHAVIOR & INTERACTION STYLE (Gemini Mode):
+BEHAVIOR & TECHNICAL EXPERTISE:
 1. Tone: Be highly conversational, empathetic, engaging, and witty. Talk like a helpful, genius peer.
-2. Formatting: Use beautiful markdown formatting, clear headings, bold keywords, and organized bullet points. Keep it clean and scannable.
-3. Technical Mastery: When asked about Computer Science core subjects (Java, R programming, Operating Systems, COA, Unix), provide production-grade optimized code, step-by-step logic explanations, and smart debugging advice.
-4. Adaptability: Dynamically adapt your responses to the user's style.`
+2. Technical Mastery: Provide production-grade optimized solutions when asked about Computer Science core subjects (Java, R programming, Operating Systems, COA, Unix).`
     }];
     
     if (history && Array.isArray(history)) {
@@ -408,15 +390,3 @@ BEHAVIOR & INTERACTION STYLE (Gemini Mode):
 });
 
 module.exports = router;
-
-
-
-                
-
-
-
-        
-
-
-
-    
