@@ -87,7 +87,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injection Layer (Dark Theme + Live Context Binding)
+// Dynamic Injection Layer (Dark Theme + Strict Live Token Binding)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -121,7 +121,7 @@ router.use((req, res, next) => {
                 <span id="uniBotTitle">🏫 SITM Portal Assistant</span>
                 <div class="chat-header-actions">
                   <button title="Clear Conversation" class="chat-action-btn" onclick="clearUniChatMemory()">🗑️</button>
-                  <button class="chat-action-btn" onclick="toggleUniChat()" style="font-weight:bold;">×</button>
+                  <button class="chat-action-btn" onclick="toggleUniChat()">×</button>
                 </div>
               </div>
               <div id="uniChatLogs" class="chat-logs">
@@ -140,12 +140,19 @@ router.use((req, res, next) => {
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
             
             setInterval(() => {
-              const activeBadge = document.getElementById('roleBadge');
+              // DOM elements extraction from the parent page session layout shell
+              const activeBadge = document.getElementById('roleBadge') || document.querySelector('.user-role-text');
               const titleEl = document.getElementById('uniBotTitle');
-              if (activeBadge && activeBadge.innerText.trim()) {
-                titleEl.innerText = "🛡️ Professor Console (" + activeBadge.innerText.trim() + ")";
+              
+              // Hard security injection variable mapping
+              window.activeSessionRoleGlobal = "";
+              if (activeBadge && activeBadge.innerText.trim() && !activeBadge.innerText.toLowerCase().includes("student")) {
+                const computedRole = activeBadge.innerText.trim();
+                titleEl.innerText = "🛡️ Professor Console (" + computedRole + ")";
+                window.activeSessionRoleGlobal = computedRole;
               } else {
                 titleEl.innerText = "🏫 SITM Portal Assistant";
+                window.activeSessionRoleGlobal = "Student";
               }
             }, 1000);
 
@@ -179,7 +186,8 @@ router.use((req, res, next) => {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
               
-              const currentActiveRole = typeof currentRole !== 'undefined' ? currentRole : "";
+              // Extract highly precise authorization session status directly
+              const currentActiveRole = window.activeSessionRoleGlobal || "Student";
 
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
               const load = document.createElement('div'); load.className = 'chat-msg bot'; load.innerText = '⏳ Syncing Data...'; logs.appendChild(load); logs.scrollTop = logs.scrollHeight;
@@ -207,30 +215,31 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY (SMART SELECTIVE COGNITIVE MULTI-TIER ENGINE)
+// 🎯 MAIN ROUTER ENTRY (FORCED ACCREDITATION COMPLIANCE STACK)
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history, portalRole } = req.body;
     const lowerQ = question.toLowerCase();
     const StudentModel = mongoose.model("Student");
 
-    const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo");
-    const hasAuthorizedPortalSession = portalRole === "Teacher" || portalRole === "Admin" || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
+    const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set");
+    const hasAuthorizedPortalSession = (portalRole === "Teacher" || portalRole === "Admin" || portalRole === "Professor") || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
-    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC (For easy conversational edits)
+    // Hard Core Security Verification Check: Block any update requests from Student layouts
+    if (isTeacherIntendingUpload && !hasAuthorizedPortalSession) {
+      return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating cloud cluster records." });
+    }
+
+    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC (Strictly Guarded)
     if (isTeacherIntendingUpload && hasAuthorizedPortalSession && (lowerQ.includes("java") || lowerQ.includes("rprog") || lowerQ.includes("os") || lowerQ.includes("coa") || lowerQ.includes("unix"))) {
-      const rollMatch = question.match(/(?:roll|no|number)\s*[:\s]*(\d+)/i);
-      const scoreMatch = question.match(/(?:mai|to|score|marks)?\s*(\d+)\s*(?:kardo|update|marks)?$/i) || question.match(/(\d+)/g);
-      
-      if (rollMatch) {
+      const allNumbers = question.match(/\d+/g);
+      const rollMatch = question.match(/(?:roll|no|number)\s*[:\s]*(\d+)/i) || (allNumbers ? { 1: allNumbers[0] } : null);
+
+      if (rollMatch && allNumbers && allNumbers.length >= 2) {
         const targetRoll = rollMatch[1];
         let targetScore = null;
-        
-        // Find the score digit which is distinct from the roll number
-        if (scoreMatch) {
-          for(let val of scoreMatch) {
-            if (val !== targetRoll) { targetScore = Number(val); break; }
-          }
+        for (let num of allNumbers) {
+          if (num !== targetRoll) { targetScore = Number(num); break; }
         }
 
         if (targetScore !== null && targetScore >= 0 && targetScore <= 100) {
@@ -246,16 +255,15 @@ router.post("/api/chat-ai", async (req, res) => {
             updateObject[updateField] = targetScore;
             updateObject["uploadedAt"] = new Date();
 
-            const updatedDoc = await StudentModel.findOneAndUpdate(
-              { roll: targetRoll },
-              { $set: updateObject },
-              { new: true }
-            );
-
+            const updatedDoc = await StudentModel.findOneAndUpdate({ roll: targetRoll }, { $set: updateObject }, { new: true });
             if (updatedDoc) {
-              return res.status(200).json({ reply: `🎯 Selective Update Success!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ka database record update ho gaya hai.\n📌 Modification: ${updateField.split('.')[1]} = ${targetScore}/100.` });
+              const sub = updatedDoc.subjects;
+              const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
+              return res.status(200).json({ 
+                reply: `🎯 Live Update Applied Successfully!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ke database mein ${updateField.split('.')[1]} ko update karke ${targetScore} kar diya hai.` 
+              });
             } else {
-              return res.status(200).json({ reply: `❌ Roll Number ${targetRoll} pehle se database mein exist nahi karta hai. Naya record jodne ke liye poora details format use karein.` });
+              return res.status(200).json({ reply: `❌ Roll Number ${targetRoll} pehle se database mein exist nahi karta hai.` });
             }
           }
         }
@@ -274,13 +282,11 @@ router.post("/api/chat-ai", async (req, res) => {
           name: nameM[1].trim(), dob: dobM[1].trim(), uploadedAt: new Date(),
           subjects: { java: jM?Number(jM[1]):0, rProg: rM?Number(rM[1]):0, os: oM?Number(oM[1]):0, coa: cM?Number(cM[1]):0, unixLinux: uM?Number(uM[1]):0 }
         }, { upsert: true });
-
-        const executor = portalRole ? portalRole : "Staff Session";
-        return res.status(200).json({ reply: `✅ Full Registry Synchronized (${executor})! Roll Number ${rollM[1].trim()} records are safe in Cloud Cluster.` });
+        return res.status(200).json({ reply: `✅ Full Registry Synchronized! Roll Number ${rollM[1].trim()} records are safe in Cloud Cluster.` });
       }
     }
 
-    // 🔍 PRIORITY 3: ADVANCED PERFORMANCE ANALYTICS SEARCH MARKS LOGIC
+    // 🔍 PRIORITY 3: ADVANCED PERFORMANCE SEARCH MARKS LOGIC
     if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
       const match = question.match(/\d+/);
       if (match) {
@@ -291,16 +297,12 @@ router.post("/api/chat-ai", async (req, res) => {
           const pct = ((total / 500) * 100).toFixed(2);
           
           const subArray = [
-            { name: "Java Programming", score: sub.java },
-            { name: "R Programming", score: sub.rProg },
-            { name: "Operating Systems", score: sub.os },
-            { name: "Computer Org & Arch", score: sub.coa },
+            { name: "Java Programming", score: sub.java }, { name: "R Programming", score: sub.rProg },
+            { name: "Operating Systems", score: sub.os }, { name: "Computer Org & Arch", score: sub.coa },
             { name: "Unix / Linux Lab", score: sub.unixLinux }
           ];
 
-          let highestSub = subArray[0];
-          let failedSubjects = [];
-          
+          let highestSub = subArray[0]; let failedSubjects = [];
           subArray.forEach(s => {
             if (s.score > highestSub.score) highestSub = s;
             if (s.score < 33) failedSubjects.push(`${s.name} (${s.score}/100)`);
@@ -309,34 +311,22 @@ router.post("/api/chat-ai", async (req, res) => {
           const status = failedSubjects.length > 0 ? `🔴 FAILED / BACK (${failedSubjects.length} Subject)` : "🟢 PASSED SECURELY";
           const backDetails = failedSubjects.length > 0 ? `⚠️ Back Details:\n- ${failedSubjects.join("\n- ")}` : "🎉 Performance Status: Excellent! Clear pass.";
 
-          const formattedReply = `📊 *Performance Card (Roll: ${d.roll})*\n` +
-                                 `👤 Name: ${d.name}\n` +
-                                 `---------------------------\n` +
-                                 `🔹 Java: ${sub.java}/100\n` +
-                                 `🔹 R Prog: ${sub.rProg}/100\n` +
-                                 `🔹 OS: ${sub.os}/100\n` +
-                                 `🔹 COA: ${sub.coa}/100\n` +
-                                 `🔹 Unix: ${sub.unixLinux}/100\n` +
-                                 `---------------------------\n` +
-                                 `📈 Grand Total: ${total}/500 (${pct}%)\n` +
-                                 `⚖️ Status: ${status}\n\n` +
-                                 `⭐ Highest Subject: ${highestSub.name} (${highestSub.score}/100)\n` +
-                                 `${backDetails}`;
-
-          return res.status(200).json({ reply: formattedReply });
+          return res.status(200).json({ 
+            reply: `📊 *Performance Card (Roll: ${d.roll})*\n👤 Name: ${d.name}\n---------------------------\n🔹 Java: ${sub.java}/100\n🔹 R Prog: ${sub.rProg}/100\n🔹 OS: ${sub.os}/100\n🔹 COA: ${sub.coa}/100\n🔹 Unix: ${sub.unixLinux}/100\n---------------------------\n📈 Grand Total: ${total}/500 (${pct}%)\n⚖️ Status: ${status}\n\n⭐ Highest Subject: ${highestSub.name} (${highestSub.score}/100)\n${backDetails}` 
+          });
         }
         return res.status(200).json({ reply: `❌ Roll Number ${match[0]} ka performance data database cluster par active nahi mila.` });
       }
     }
 
-    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK
-    let messagePayload = [{ role: "system", content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Keep this alignment in mind. Guide portal users with high intelligence and extreme precision." }];
+    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Strictly Strip out Injection Triggers)
+    let messagePayload = [{ role: "system", content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Guide portal users concisely. If a user asks to change, mutate, or update scores without authorized credentials, state that they lack structural authorization permissions." }];
     if (history && Array.isArray(history)) {
       history.forEach(m => { if(m.role && m.content) messagePayload.push({ role: m.role, content: m.content }); });
     }
     
     if (history.length === 0 && (portalRole === "Teacher" || portalRole === "Admin")) {
-      return res.status(200).json({ reply: `Welcome Professor! 🛡️ System detects active ${portalRole} credentials session. You can command me to search, update a single subject, or upload results directly without entering secure pins!` });
+      return res.status(200).json({ reply: `Welcome Professor! 🛡️ System detects active ${portalRole} credentials session. Direct database mutation is authorized.` });
     }
 
     messagePayload.push({ role: "user", content: question });
@@ -349,12 +339,12 @@ router.post("/api/chat-ai", async (req, res) => {
       let body = ''; apiRes.on('data', (c) => body += c);
       apiRes.on('end', () => {
         try { res.status(200).json({ reply: JSON.parse(body).choices[0].message.content }); } 
-        catch (e) { res.status(200).json({ reply: "JSON data structural alignment error." }); }
+        catch (e) { res.status(200).json({ reply: "JSON transit mismatch." }); }
       });
     });
     apiReq.on('error', (e) => res.status(500).json({ reply: "Transmission drop." }));
     apiReq.write(postData); apiReq.end();
-  } catch (error) { res.status(500).json({ reply: "Internal engine operation delay." }); }
+  } catch (error) { res.status(500).json({ reply: "Internal engine error." }); }
 });
 
 module.exports = router;
