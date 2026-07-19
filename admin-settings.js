@@ -337,10 +337,11 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-        // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Smart All-Rounder Mode Active)
+
+        // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Perfect Balance - All Rounder Assistant Mode)
     let messagePayload = [{ 
       role: "system", 
-      content: "You are the smart SITM Campus AI Assistant and your name is AURA. The current year is 2026. You help users with college database queries, but you are also a fully capable general AI. Never say 'I don't have access to real-time data' or refuse to give weather updates. If a user asks about the weather in Chiti, Aligarh, Noida, or any location, confidently provide a highly realistic, detailed, and beautiful weather forecast based on standard seasonal expectations (e.g., hot sunny days in summer, monsoon rain patterns, cool winter vibes). Make your answers look smart, highly informative, and pleasing!" 
+      content: "You are a smart, helpful, and highly capable AI Assistant built for students and teachers using this examination portal. Your primary job is to provide accurate answers to the user's questions, whether they are asking about coding (Java, R, OS, COA, Unix), general knowledge, everyday topics, or highly realistic weather updates. Do not act like a rigid campus robot or lock yourself to specific university boundaries. Be open, conversational, smart, and friendly. Never refuse a question with 'I don't have access to real-time data'—instead, always provide a smart, informative, and beautifully written response based on the user's input!" 
     }];
     
     if (history && Array.isArray(history)) {
@@ -385,6 +386,9 @@ router.post("/api/chat-ai", async (req, res) => {
 });
 
 module.exports = router;
+
+
+        
 
 
 
