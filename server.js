@@ -145,8 +145,13 @@ app.get("/", (req, res) => {
         .total-row { border-top: 1px solid #475569; margin-top: 10px; padding-top: 10px; font-weight: bold; font-size: 1rem; color: #38bdf8; }
         .admin-controls { background: #0f172a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #8b5cf6; display: none; }
         .captcha-box { border: 1px solid #475569; padding: 10px; text-align: center; border-radius: 8px; background: #0f172a; margin-top: 10px; color: #94a3b8; font-size: 0.85rem;}
-        .view-records-container { margin-top: 20px; background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #475569; }
-        .record-item { border-bottom: 1px solid #334155; padding: 8px 0; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+        
+        /* 📊 CSS FOR DEEP FULL VIEW MASTER TABLE */
+        .view-records-container { margin-top: 20px; background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #475569; max-height: 400px; overflow-y: auto; overflow-x: auto; }
+        .master-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; color: #f1f5f9; text-align: left; min-width: 500px; }
+        .master-table th { background: #1e293b; color: #38bdf8; padding: 8px; border: 1px solid #334155; font-weight: 600; position: sticky; top: 0; }
+        .master-table td { padding: 8px; border: 1px solid #334155; }
+        .master-table tr:nth-child(even) { background: #131e31; }
       </style>
     </head>
     <body>
@@ -182,12 +187,12 @@ app.get("/", (req, res) => {
       </div>
 
       <!-- STAFF DASHBOARD -->
-      <div id="teacherDashboardCard" class="card">
+      <div id="teacherDashboardCard" class="card" style="max-width: 600px;">
         <h2>Records Dashboard (<span id="roleBadge"></span>)</h2>
         <div id="adminPanel" class="admin-controls">
            <p style="font-size:0.85rem; margin-bottom:10px;">Status: <b id="publishStatusTxt">Checking...</b></p>
            <button class="btn btn-primary" style="background:#8b5cf6;" onclick="togglePublish()">Toggle Publish/Hide Status</button>
-           <button class="btn btn-secondary" style="margin-top: 10px;" onclick="viewAllRecords()">📂 View All Saved Records</button>
+           <button class="btn btn-secondary" style="margin-top: 10px;" onclick="viewAllRecords()">📂 View All Saved Records (Deep View)</button>
            <div id="allRecordsContainer" class="view-records-container" style="display:none;"><div id="recordsList"></div></div>
         </div>
 
@@ -242,7 +247,7 @@ app.get("/", (req, res) => {
             checkPublishStatus(); openDashboard();
           } else if(pass === 'cse_teacher_2026') {
             currentRole = "Teacher"; status.innerHTML = "<span class='success'>✓ Teacher Access Granted!</span>";
-            document.getElementById('adminPanel').style.display = "none";
+            document.getElementById('adminPanel').style.display = "block"; // Allow deep view table to teacher too
             document.getElementById('roleBadge').innerText = "Teacher"; openDashboard();
           } else { status.innerHTML = "<span class='error'>❌ Invalid Security Password!</span>"; }
         }
@@ -277,6 +282,7 @@ app.get("/", (req, res) => {
           } catch(e) {}
         }
 
+        // 📊 UPGRADED MASTER DEEP TABLE DATA POPULATION METHOD
         async function viewAllRecords() {
           const container = document.getElementById('allRecordsContainer');
           const list = document.getElementById('recordsList');
@@ -284,12 +290,42 @@ app.get("/", (req, res) => {
             const res = await fetch('/api/all-results');
             const out = await res.json();
             if(out.success && out.data.length > 0) {
-              list.innerHTML = out.data.map(function(d) {
-                return '<div class="record-item"><b>👤 ' + d.name + ' (Roll: ' + d.roll + ')</b></div>';
-              }).join('');
+              let tableHtml = '<table class="master-table">' +
+                '<tr>' +
+                  '<th>Name</th>' +
+                  '<th>Roll</th>' +
+                  '<th>DOB</th>' +
+                  '<th>Java</th>' +
+                  '<th>R</th>' +
+                  '<th>OS</th>' +
+                  '<th>COA</th>' +
+                  '<th>Unix</th>' +
+                  '<th>Total</th>' +
+                '</tr>';
+                
+              out.data.forEach(function(d) {
+                const t = d.subjects.java + d.subjects.rProg + d.subjects.os + d.subjects.coa + d.subjects.unixLinux;
+                tableHtml += '<tr>' +
+                  '<td><b>' + d.name + '</b></td>' +
+                  '<td>' + d.roll + '</td>' +
+                  '<td>' + d.dob + '</td>' +
+                  '<td>' + d.subjects.java + '</td>' +
+                  '<td>' + d.subjects.rProg + '</td>' +
+                  '<td>' + d.subjects.os + '</td>' +
+                  '<td>' + d.subjects.coa + '</td>' +
+                  '<td>' + d.subjects.unixLinux + '</td>' +
+                  '<td><b>' + t + '</b></td>' +
+                '</tr>';
+              });
+              
+              tableHtml += '</table>';
+              list.innerHTML = tableHtml;
+              container.style.display = 'block';
+            } else {
+              list.innerHTML = '<div style="font-size:0.85rem; color:#94a3b8; text-align:center;">No records available.</div>';
               container.style.display = 'block';
             }
-          } catch(err) { alert("Error fetching system database records."); }
+          } catch(err) { alert("Error fetching full dynamic master list."); }
         }
 
         async function publishResult() {
@@ -316,7 +352,10 @@ app.get("/", (req, res) => {
               body: JSON.stringify(data)
             });
             const out = await res.json();
-            if(out.success) { status.innerHTML = "<span class='success'>✓ Record Updated & Logged!</span>"; }
+            if(out.success) { 
+              status.innerHTML = "<span class='success'>✓ Record Updated & Logged!</span>";
+              if(document.getElementById('allRecordsContainer').style.display === 'block') { viewAllRecords(); }
+            }
           } catch(err) { status.innerHTML = "<span class='error'>❌ Server Sync Failed!</span>"; }
         }
 
