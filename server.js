@@ -5,6 +5,9 @@ const app = express();
 app.use(express.json());
 const adminSettings = require("./admin-settings");
 app.use("/", adminSettings);
+const downloadPdfRouter = require("./download-pdf");
+app.use("/", downloadPdfRouter);
+
 const viewResults = require("./view-results");
 app.use("/", viewResults);
 
@@ -460,29 +463,57 @@ app.get("/", (req, res) => {
           }
         }
 
-        function downloadPDF() {
-          const content = document.getElementById('marksheetView').innerHTML;
-          const container = document.getElementById('pdf-container');
-          
-          container.innerHTML = '<div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">' +
-              '<h1 style="font-size: 24px; margin: 0; color: #000000;">SITM COLLEGE</h1>' +
-              '<p style="font-size: 12px; margin: 5px 0 0 0; color: #555555;">Provisional Academic Performance Statement</p>' +
-            '</div>' + content;
-          
-          container.style.display = 'block';
+                async function downloadPDF() {
+          const roll = document.getElementById('studentRoll').value;
+          let dob = document.getElementById('studentDob').value;
+          dob = dob.split('-').reverse().join('/');
 
-          const opt = {
-            margin:       15,
-            filename:     'Provisional_Marksheet.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, logging: false },
-            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-          };
-          
-          html2pdf().set(opt).from(container).save().then(() => {
-            container.style.display = 'none';
-          });
+          try {
+            const resData = await fetch('/api/get-result', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ roll, dob })
+            });
+            const out = await resData.json();
+
+            if (out.success) {
+              const d = out.data;
+              const total = d.subjects.java + d.subjects.rProg + d.subjects.os + d.subjects.coa + d.subjects.unixLinux;
+              const pct = ((total / 500) * 100).toFixed(2);
+
+              const pdfRes = await fetch('/api/download-provisional-pdf', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                  name: d.name, roll: d.roll, dob: d.dob, course: d.course,
+                  subjects: d.subjects, total, pct
+                })
+              });
+              const pdfOut = await pdfRes.json();
+
+              if(pdfOut.success) {
+                const container = document.getElementById('pdf-container');
+                container.innerHTML = pdfOut.htmlContent;
+                container.style.display = 'block';
+
+                const opt = {
+                  margin:       15,
+                  filename:     'Provisional_Marksheet_' + roll + '.pdf',
+                  image:        { type: 'jpeg', quality: 0.98 },
+                  html2canvas:  { scale: 2, useCORS: true, logging: false },
+                  jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
+                
+                html2pdf().set(opt).from(container).save().then(() => {
+                  container.style.display = 'none';
+                });
+              }
+            }
+          } catch(err) {
+            alert("PDF compiling module transmission error.");
+          }
         }
+        
       </script>
     </body>
     </html>
