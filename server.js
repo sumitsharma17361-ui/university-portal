@@ -248,7 +248,7 @@ app.get("/", (req, res) => {
         <button class="btn btn-secondary" onclick="logoutTeacher()">← Logout Securely</button>
       </div>
 
-      <!-- PDF Hidden Layout Target Container (Styled for absolute printing clear view) -->
+      <!-- PDF Hidden Layout Target Container -->
       <div id="pdf-container" style="display:none; padding: 40px; color: #000000; background: #ffffff; font-family: 'Segoe UI', sans-serif;"></div>
 
       <script>
@@ -336,18 +336,18 @@ app.get("/", (req, res) => {
             const out = await res.json();
             
             if(out.success && out.data.length > 0) {
-              list.innerHTML = out.data.map(d => \`
-                <div class="record-item" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 0; border-bottom: 1px solid #334155;">
-                  <div style="width: 100%; display: flex; justify-content: space-between; font-weight: bold; color: #f1f5f9;">
-                    <span>👤 \${d.name} (Roll: \${d.roll})</span>
-                    <span style="color: #4ade80; font-size: 0.8rem;">Saved</span>
-                  </div>
-                  <div style="font-size: 0.8rem; color: #94a3b8;">📅 DOB: \${d.dob} | 🎓 Course: \${d.course || 'B.Tech CSE'}</div>
-                  <div style="font-size: 0.8rem; color: #38bdf8; margin-top: 2px;">
-                    📚 Java: \${d.subjects?.java} | R: \${d.subjects?.rProg} | OS: \${d.subjects?.os} | COA: \${d.subjects?.coa} | Unix: \${d.subjects?.unixLinux}
-                  </div>
-                </div>
-              \`).join('');
+              list.innerHTML = out.data.map(d => {
+                return '<div class="record-item" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 0; border-bottom: 1px solid #334155;">' +
+                  '<div style="width: 100%; display: flex; justify-content: space-between; font-weight: bold; color: #f1f5f9;">' +
+                    '<span>👤 ' + d.name + ' (Roll: ' + d.roll + ')</span>' +
+                    '<span style="color: #4ade80; font-size: 0.8rem;">Saved</span>' +
+                  '</div>' +
+                  '<div style="font-size: 0.8rem; color: #94a3b8;">📅 DOB: ' + d.dob + ' | 🎓 Course: ' + (d.course || 'B.Tech CSE') + '</div>' +
+                  '<div style="font-size: 0.8rem; color: #38bdf8; margin-top: 2px;">' +
+                    '📚 Java: ' + (d.subjects ? d.subjects.java : 0) + ' | R: ' + (d.subjects ? d.subjects.rProg : 0) + ' | OS: ' + (d.subjects ? d.subjects.os : 0) + ' | COA: ' + (d.subjects ? d.subjects.coa : 0) + ' | Unix: ' + (d.subjects ? d.subjects.unixLinux : 0) +
+                  '</div>' +
+                '</div>';
+              }).join('');
               container.style.display = 'block';
             } else {
               list.innerHTML = "<p style='text-align:center; font-size:0.85rem; color:#94a3b8;'>No records found in DB.</p>";
@@ -457,19 +457,14 @@ app.get("/", (req, res) => {
           }
         }
 
-        // 🎯 FIXED PDF COMPILING ENGINE
         function downloadPDF() {
           const content = document.getElementById('marksheetView').innerHTML;
           const container = document.getElementById('pdf-container');
           
-          // Inject structured clean black text layout specifically formatted for PDF rendering
-          container.innerHTML = \`
-            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
-              <h1 style="font-size: 24px; margin: 0; color: #000000;">SITM COLLEGE</h1>
-              <p style="font-size: 12px; margin: 5px 0 0 0; color: #555555;">Provisional Academic Performance Statement</p>
-            </div>
-            \${content}
-          \`;
+          container.innerHTML = '<div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">' +
+              '<h1 style="font-size: 24px; margin: 0; color: #000000;">SITM COLLEGE</h1>' +
+              '<p style="font-size: 12px; margin: 5px 0 0 0; color: #555555;">Provisional Academic Performance Statement</p>' +
+            '</div>' + content;
           
           container.style.display = 'block';
 
@@ -492,4 +487,4 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(\`Server running on port \${PORT}\`));
+app.listen(PORT, () => console.log("Server running on port " + PORT));
