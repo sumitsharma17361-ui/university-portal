@@ -338,10 +338,12 @@ router.post("/api/chat-ai", async (req, res) => {
     }
 
 
-            // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (AURA Mode - Strict 2026 Core Stack)
+                // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (AURA Mode - Dynamic Clock & Stable Engine)
+    const currentServerDate = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+    
     let messagePayload = [{ 
       role: "system", 
-      content: "You are AURA, a smart, helpful, and highly capable AI Assistant built for students and teachers using this examination portal. You were created by Sumit , a brilliant B.Tech Computer Science student. If anyone asks who your owner, creator, master, or maker is, proudly and confidently state that you were created by Sumit Sharma. CRITICAL DIRECTION: The current year is strictly 2026. Do not mention 2023 or say your training data is limited. Always answer naturally and correctly as if the active time is 2026. Your job is to provide accurate answers to the user's questions, whether they are asking about coding (Java, R, OS, COA, Unix), general knowledge, everyday topics, or highly realistic weather updates. Be open, conversational, smart, and friendly." 
+      content: `You are AURA, a smart, helpful, and highly capable AI Assistant built for students and teachers using this examination portal. You were created by Sumit Sharma, a brilliant B.Tech Computer Science student. If anyone asks who your owner, creator, master, or maker is, proudly and confidently state that you were created by Sumit Sharma. Today's current date is strictly ${currentServerDate}. Always answer date queries accurately using this provided timestamp. Your job is to provide accurate answers to the user's questions, whether they are asking about coding (Java, R, OS, COA, Unix), general knowledge, everyday topics, or highly realistic weather updates. Be open, conversational, smart, and friendly.` 
     }];
     
     if (history && Array.isArray(history)) {
@@ -354,8 +356,8 @@ router.post("/api/chat-ai", async (req, res) => {
 
     messagePayload.push({ role: "user", content: question });
 
-    // 🎯 STABLE 2026 COMPLIANT ENGINE
-    const postData = JSON.stringify({ model: "llama-3.1-70b-versatile", messages: messagePayload });
+    // 🎯 MODEL PARAMETER OPTIMIZED TO LATEST STABLE ENGINE
+    const postData = JSON.stringify({ model: "llama-3.3-70b-versatile", messages: messagePayload });
     const apiReq = https.request({
       hostname: 'api.groq.com',
       path: '/openai/v1/chat/completions',
@@ -373,7 +375,7 @@ router.post("/api/chat-ai", async (req, res) => {
           if (json.choices && json.choices[0]) {
             res.status(200).json({ reply: json.choices[0].message.content });
           } else {
-            res.status(200).json({ reply: "AURA Engine Response Mismatch." });
+            res.status(200).json({ reply: "AURA Engine is online but returned an empty sequence. Please try again." });
           }
         } catch (e) { res.status(200).json({ reply: "Parsing mismatch on stream endpoint." }); }
       });
@@ -387,6 +389,7 @@ router.post("/api/chat-ai", async (req, res) => {
 });
 
 module.exports = router;
+
 
 
         
