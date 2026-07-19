@@ -4,7 +4,6 @@ const app = express();
 
 app.use(express.json());
 
-// Browser Cache ko bypass karne ke liye strictly fresh frontend load force
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   next();
@@ -21,7 +20,6 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("Cloud Cluster Database Connected Successfully!"))
   .catch(err => console.error("Cloud DB Connection Error:", err));
 
-// PEHLE JAISA SIMPLE SCHEMA (No extra fields)
 const studentSchema = new mongoose.Schema({
   roll: { type: String, required: true, unique: true },
   dob: { type: String, required: true },
@@ -51,10 +49,6 @@ const logSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 const Log = mongoose.model("Log", logSchema);
-
-/* ========================================================================================= */
-/* 📍 LINE CHECKPOINT 100: BACKEND API ROUTES AND SCHEMA CONFIGURATION ENDS HERE */
-/* ========================================================================================= */
 
 app.post("/api/add-result", async (req, res) => {
   try {
@@ -106,10 +100,6 @@ app.post("/api/toggle-publish", async (req, res) => {
     res.status(200).json({ success: true, isPublished: config.isPublished });
   } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
-
-/* ========================================================================================= */
-/* 📍 LINE CHECKPOINT 200: FRONTEND INTERFACE HTML AND CSS DESIGN BEGINS HERE */
-/* ========================================================================================= */
 
 app.get("/api/config-status", async (req, res) => {
   let config = await Config.findOne({ configId: "global" });
@@ -165,10 +155,6 @@ app.get("/", (req, res) => {
         <h1>🎓 SITM COLLEGE</h1>
         <p>Unified Examination Management Portal</p>
       </div>
-
-/* ========================================================================================= */
-/* 📍 LINE CHECKPOINT 300: HTML CARDS AND STUDENT INPUT ELEMENTS DEFINITION */
-/* ========================================================================================= */
 
       <div class="main-nav" id="mainNav">
         <button class="nav-btn active" id="btnTabStudent" onclick="switchTab('student')">🧑‍🎓 Student</button>
@@ -226,10 +212,6 @@ app.get("/", (req, res) => {
       </div>
 
       <div id="pdf-container" style="display:none; padding: 40px; color: #000000; background: #ffffff;"></div>
-
-/* ========================================================================================= */
-/* 📍 LINE CHECKPOINT 400: FRONTEND INTERACTION SCRIPTS AND AJAX REQUESTS */
-/* ========================================================================================= */
 
       <script>
         let currentRole = "";
@@ -309,10 +291,6 @@ app.get("/", (req, res) => {
             }
           } catch(err) { alert("Error fetching system database records."); }
         }
-
-/* ========================================================================================= */
-/* 📍 LINE CHECKPOINT 500: DYNAMIC MARKS DATA FETCH AND TIMEOUT PDF COMPILER */
-/* ========================================================================================= */
 
         async function publishResult() {
           const status = document.getElementById('publishStatus');
@@ -417,7 +395,3 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log("Server running on port " + PORT));
-
-/* ========================================================================================= */
-/* 📍 LINE CHECKPOINT 600: END OF BACKEND CONTROL SYSTEM */
-/* ========================================================================================= */
