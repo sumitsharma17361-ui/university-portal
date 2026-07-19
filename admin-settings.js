@@ -121,7 +121,7 @@ router.use((req, res, next) => {
                 <span id="uniBotTitle">🏫 SITM Portal Assistant</span>
                 <div class="chat-header-actions">
                   <button title="Clear Conversation" class="chat-action-btn" onclick="clearUniChatMemory()">🗑️</button>
-                  <button class="chat-action-btn" onclick="toggleUniChat()">×</button>
+                  <button class="chat-action-btn" onclick="toggleUniChat()" style="font-weight:bold;">×</button>
                 </div>
               </div>
               <div id="uniChatLogs" class="chat-logs">
@@ -207,37 +207,80 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY (FIXED EXECUTION PRIORITY TIER)
+// 🎯 MAIN ROUTER ENTRY (SMART SELECTIVE COGNITIVE MULTI-TIER ENGINE)
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history, portalRole } = req.body;
     const lowerQ = question.toLowerCase();
     const StudentModel = mongoose.model("Student");
 
-    // ⭐ PRIORITY 1: TEACHER UPLOAD LOGIC (Pehle check hoga taaki search shabdon se intercept na ho)
-    const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload");
+    const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo");
     const hasAuthorizedPortalSession = portalRole === "Teacher" || portalRole === "Admin" || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
-    if (isTeacherIntendingUpload && hasAuthorizedPortalSession) {
+    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC (For easy conversational edits)
+    if (isTeacherIntendingUpload && hasAuthorizedPortalSession && (lowerQ.includes("java") || lowerQ.includes("rprog") || lowerQ.includes("os") || lowerQ.includes("coa") || lowerQ.includes("unix"))) {
+      const rollMatch = question.match(/(?:roll|no|number)\s*[:\s]*(\d+)/i);
+      const scoreMatch = question.match(/(?:mai|to|score|marks)?\s*(\d+)\s*(?:kardo|update|marks)?$/i) || question.match(/(\d+)/g);
+      
+      if (rollMatch) {
+        const targetRoll = rollMatch[1];
+        let targetScore = null;
+        
+        // Find the score digit which is distinct from the roll number
+        if (scoreMatch) {
+          for(let val of scoreMatch) {
+            if (val !== targetRoll) { targetScore = Number(val); break; }
+          }
+        }
+
+        if (targetScore !== null && targetScore >= 0 && targetScore <= 100) {
+          let updateField = "";
+          if (lowerQ.includes("java")) updateField = "subjects.java";
+          else if (lowerQ.includes("rprog") || lowerQ.includes(" r ")) updateField = "subjects.rProg";
+          else if (lowerQ.includes("os") || lowerQ.includes("operating")) updateField = "subjects.os";
+          else if (lowerQ.includes("coa") || lowerQ.includes("architecture")) updateField = "subjects.coa";
+          else if (lowerQ.includes("unix") || lowerQ.includes("linux")) updateField = "subjects.unixLinux";
+
+          if (updateField) {
+            let updateObject = {};
+            updateObject[updateField] = targetScore;
+            updateObject["uploadedAt"] = new Date();
+
+            const updatedDoc = await StudentModel.findOneAndUpdate(
+              { roll: targetRoll },
+              { $set: updateObject },
+              { new: true }
+            );
+
+            if (updatedDoc) {
+              return res.status(200).json({ reply: `🎯 Selective Update Success!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ka database record update ho gaya hai.\n📌 Modification: ${updateField.split('.')[1]} = ${targetScore}/100.` });
+            } else {
+              return res.status(200).json({ reply: `❌ Roll Number ${targetRoll} pehle se database mein exist nahi karta hai. Naya record jodne ke liye poora details format use karein.` });
+            }
+          }
+        }
+      }
+    }
+
+    // ⭐ PRIORITY 2: BULK FULL RECORD INSERT/UPDATE LOGIC
+    if (isTeacherIntendingUpload && hasAuthorizedPortalSession && lowerQ.includes("name:") && lowerQ.includes("dob:")) {
       const rollM = question.match(/roll:\s*([^\s,]+)/i);
       const nameM = question.match(/name:\s*([^,]+)/i), dobM = question.match(/dob:\s*([^\s,]+)/i);
       const jM = question.match(/java:\s*(\d+)/i), rM = question.match(/rprog:\s*(\d+)/i);
       const oM = question.match(/os:\s*(\d+)/i), cM = question.match(/coa:\s*(\d+)/i), uM = question.match(/unix:\s*(\d+)/i);
 
-      if (!rollM || !nameM || !dobM) {
-        return res.status(200).json({ reply: "❌ Format Mismatch! Marks add karne ka correct design structure:\n\nAdd result roll: 12, name: Sumit, dob: 22/08/2005, java: 90, rprog: 85, os: 80, coa: 75, unix: 95" });
+      if (rollM && nameM && dobM) {
+        await StudentModel.findOneAndUpdate({ roll: rollM[1].trim() }, {
+          name: nameM[1].trim(), dob: dobM[1].trim(), uploadedAt: new Date(),
+          subjects: { java: jM?Number(jM[1]):0, rProg: rM?Number(rM[1]):0, os: oM?Number(oM[1]):0, coa: cM?Number(cM[1]):0, unixLinux: uM?Number(uM[1]):0 }
+        }, { upsert: true });
+
+        const executor = portalRole ? portalRole : "Staff Session";
+        return res.status(200).json({ reply: `✅ Full Registry Synchronized (${executor})! Roll Number ${rollM[1].trim()} records are safe in Cloud Cluster.` });
       }
-
-      await StudentModel.findOneAndUpdate({ roll: rollM[1].trim() }, {
-        name: nameM[1].trim(), dob: dobM[1].trim(), uploadedAt: new Date(),
-        subjects: { java: jM?Number(jM[1]):0, rProg: rM?Number(rM[1]):0, os: oM?Number(oM[1]):0, coa: cM?Number(cM[1]):0, unixLinux: uM?Number(uM[1]):0 }
-      }, { upsert: true });
-
-      const executor = portalRole ? portalRole : "Staff Session";
-      return res.status(200).json({ reply: `✅ Session Verified (${executor})! Roll Number ${rollM[1].trim()} records are synchronized with Cloud Cluster database.` });
     }
 
-    // 🔍 PRIORITY 2: ADVANCED ANALYTICS SEARCH MARKS LOGIC
+    // 🔍 PRIORITY 3: ADVANCED PERFORMANCE ANALYTICS SEARCH MARKS LOGIC
     if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
       const match = question.match(/\d+/);
       if (match) {
@@ -264,7 +307,7 @@ router.post("/api/chat-ai", async (req, res) => {
           });
 
           const status = failedSubjects.length > 0 ? `🔴 FAILED / BACK (${failedSubjects.length} Subject)` : "🟢 PASSED SECURELY";
-          const backDetails = failedSubjects.length > 0 ? `⚠️ Back Details:\n- ${failedSubjects.join("\n- ")}` : "🎉 Performance Status: Excellent! Clear clear pass.";
+          const backDetails = failedSubjects.length > 0 ? `⚠️ Back Details:\n- ${failedSubjects.join("\n- ")}` : "🎉 Performance Status: Excellent! Clear pass.";
 
           const formattedReply = `📊 *Performance Card (Roll: ${d.roll})*\n` +
                                  `👤 Name: ${d.name}\n` +
@@ -286,14 +329,14 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-    // 🤖 PRIORITY 3: REGULAR ASSISTANT TALK STACK
+    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK
     let messagePayload = [{ role: "system", content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Keep this alignment in mind. Guide portal users with high intelligence and extreme precision." }];
     if (history && Array.isArray(history)) {
       history.forEach(m => { if(m.role && m.content) messagePayload.push({ role: m.role, content: m.content }); });
     }
     
     if (history.length === 0 && (portalRole === "Teacher" || portalRole === "Admin")) {
-      return res.status(200).json({ reply: `Welcome Professor! 🛡️ System detects active ${portalRole} credentials session. You can command me to search or upload results directly without entering secure authorization pins!` });
+      return res.status(200).json({ reply: `Welcome Professor! 🛡️ System detects active ${portalRole} credentials session. You can command me to search, update a single subject, or upload results directly without entering secure pins!` });
     }
 
     messagePayload.push({ role: "user", content: question });
