@@ -87,7 +87,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injection Layer (Dark Theme + Strict Live Token Binding)
+// Dynamic Injection Layer (Premium Glassmorphic Dark Theme + Advanced UI Interaction)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -95,21 +95,163 @@ router.use((req, res, next) => {
       if (typeof html === "string") {
         const themeAndChatStyles = `
           <style>
-            #uniChatbotContainer { position: fixed; bottom: 20px; right: 20px; z-index: 99999; font-family: 'Segoe UI', sans-serif; }
-            #uniChatLauncher { background: #38bdf8; color: #0f172a; border: none; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; font-size: 1.6rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4); }
-            #uniChatBox { width: 340px; height: 440px; background: #1e293b; border: 1px solid #334155; border-radius: 16px; box-shadow: 0 12px 32px rgba(0,0,0,0.5); display: none; flex-direction: column; overflow: hidden; }
-            .chat-header { background: #0f172a; color: #38bdf8; padding: 15px; font-weight: 600; font-size: 0.95rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
-            .chat-header-actions { display: flex; align-items: center; gap: 14px; }
-            .chat-action-btn { background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 1.1rem; }
-            .chat-action-btn:hover { color: #f8fafc; }
-            .chat-logs { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #0f172a; font-size: 0.85rem; }
-            .chat-msg { padding: 10px 14px; border-radius: 12px; max-width: 85%; line-height: 1.4; white-space: pre-wrap; }
-            .chat-msg.bot { background: #1e293b; color: #f8fafc; align-self: flex-start; border: 1px solid #334155; }
-            .chat-msg.user { background: #38bdf8; color: #0f172a; align-self: flex-end; font-weight: 500; }
-            .chat-input-area { display: flex; padding: 12px; border-top: 1px solid #334155; background: #1e293b; }
-            .chat-input-area input { flex: 1; border: 1px solid #475569; padding: 10px 14px; border-radius: 8px; font-size: 0.85rem; color: #f8fafc !important; background: #0f172a !important; }
-            .chat-input-area input:focus { outline: none; border-color: #38bdf8; }
-            .chat-send-btn { background: #38bdf8; color: #0f172a; border: none; padding: 0 16px; margin-left: 8px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+            #uniChatbotContainer { 
+              position: fixed; 
+              bottom: 25px; 
+              right: 25px; 
+              z-index: 99999; 
+              font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif; 
+            }
+            #uniChatLauncher { 
+              background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); 
+              color: #ffffff; 
+              border: none; 
+              width: 60px; 
+              height: 60px; 
+              border-radius: 50%; 
+              cursor: pointer; 
+              font-size: 1.6rem; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
+              box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4), inset 0 2px 4px rgba(255,255,255,0.2); 
+              transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            #uniChatLauncher:hover {
+              transform: scale(1.08) rotate(5deg);
+              box-shadow: 0 12px 30px rgba(37, 99, 235, 0.6);
+            }
+            #uniChatBox { 
+              width: 380px; 
+              height: 520px; 
+              background: rgba(30, 41, 59, 0.85); 
+              backdrop-filter: blur(16px);
+              -webkit-backdrop-filter: blur(16px);
+              border: 1px solid rgba(255, 255, 255, 0.08); 
+              border-radius: 24px; 
+              box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 1px 3px rgba(255,255,255,0.05); 
+              display: none; 
+              flex-direction: column; 
+              overflow: hidden; 
+              transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+              animation: chatSlideIn 0.3s ease-out;
+            }
+            @keyframes chatSlideIn {
+              from { opacity: 0; transform: translateY(20px) scale(0.95); }
+              to { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            .chat-header { 
+              background: linear-gradient(to right, #0f172a, #1e293b); 
+              color: #f8fafc; 
+              padding: 18px 20px; 
+              font-weight: 600; 
+              font-size: 0.95rem; 
+              display: flex; 
+              justify-content: space-between; 
+              align-items: center; 
+              border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+            }
+            .chat-header-title-container { display: flex; align-items: center; gap: 8px; }
+            .chat-header-actions { display: flex; align-items: center; gap: 16px; }
+            .chat-action-btn { 
+              background: rgba(255, 255, 255, 0.05); 
+              border: none; 
+              color: #94a3b8; 
+              cursor: pointer; 
+              font-size: 1rem; 
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              transition: all 0.2s;
+            }
+            .chat-action-btn:hover { 
+              background: rgba(255, 255, 255, 0.12); 
+              color: #f8fafc; 
+              transform: translateY(-1px);
+            }
+            .chat-logs { 
+              flex: 1; 
+              padding: 20px; 
+              overflow-y: auto; 
+              display: flex; 
+              flex-direction: column; 
+              gap: 12px; 
+              background: rgba(15, 23, 42, 0.6); 
+              font-size: 0.88rem; 
+            }
+            .chat-logs::-webkit-scrollbar { width: 6px; }
+            .chat-logs::-webkit-scrollbar-track { background: transparent; }
+            .chat-logs::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+            .chat-logs::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+            .chat-msg { 
+              padding: 12px 16px; 
+              border-radius: 18px; 
+              max-width: 82%; 
+              line-height: 1.5; 
+              white-space: pre-wrap; 
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              animation: msgFadeIn 0.2s ease-out forwards;
+            }
+            @keyframes msgFadeIn {
+              from { opacity: 0; transform: translateY(5px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .chat-msg.bot { 
+              background: #1e293b; 
+              color: #e2e8f0; 
+              align-self: flex-start; 
+              border-bottom-left-radius: 4px;
+              border: 1px solid rgba(255, 255, 255, 0.03); 
+            }
+            .chat-msg.user { 
+              background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); 
+              color: #ffffff; 
+              align-self: flex-end; 
+              border-bottom-right-radius: 4px;
+              font-weight: 400; 
+            }
+            .chat-input-area { 
+              display: flex; 
+              padding: 16px 20px; 
+              border-top: 1px solid rgba(255, 255, 255, 0.05); 
+              background: #1e293b; 
+              align-items: center;
+              gap: 10px;
+            }
+            .chat-input-area input { 
+              flex: 1; 
+              border: 1px solid rgba(255, 255, 255, 0.1); 
+              padding: 12px 16px; 
+              border-radius: 12px; 
+              font-size: 0.88rem; 
+              color: #f8fafc !important; 
+              background: #0f172a !important; 
+              transition: all 0.2s;
+            }
+            .chat-input-area input:focus { 
+              outline: none; 
+              border-color: #0ea5e9; 
+              box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+            }
+            .chat-send-btn { 
+              background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%); 
+              color: #ffffff; 
+              border: none; 
+              padding: 12px 20px; 
+              border-radius: 12px; 
+              cursor: pointer; 
+              font-weight: 600; 
+              font-size: 0.88rem; 
+              transition: all 0.2s;
+              box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+            }
+            .chat-send-btn:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+            }
           </style>
         `;
 
@@ -118,14 +260,16 @@ router.use((req, res, next) => {
             <button id="uniChatLauncher" onclick="toggleUniChat()">💬</button>
             <div id="uniChatBox">
               <div class="chat-header">
-                <span id="uniBotTitle">🏫 SITM Portal Assistant</span>
+                <div class="chat-header-title-container">
+                  <span id="uniBotTitle">🏫 SITM Portal Assistant</span>
+                </div>
                 <div class="chat-header-actions">
                   <button title="Clear Conversation" class="chat-action-btn" onclick="clearUniChatMemory()">🗑️</button>
                   <button class="chat-action-btn" onclick="toggleUniChat()">×</button>
                 </div>
               </div>
               <div id="uniChatLogs" class="chat-logs">
-                <div class="chat-msg bot">Hello! I am your SITM Database Integrated Assistant. 🚀 Give a roll number to check performance analytics instantly!</div>
+                <div class="chat-msg bot">Hello! I am your SITM Database Integrated Assistant. 🚀 Provide a student roll number to view authentic academic performance profiles instantly.</div>
               </div>
               <div class="chat-input-area">
                 <input type="text" id="uniChatInput" placeholder="Ask anything..." onkeypress="handleChatKey(event)">
@@ -146,10 +290,10 @@ router.use((req, res, next) => {
               window.activeSessionRoleGlobal = "";
               if (activeBadge && activeBadge.innerText.trim() && !activeBadge.innerText.toLowerCase().includes("student")) {
                 const computedRole = activeBadge.innerText.trim();
-                titleEl.innerText = "🛡️ Professor Console (" + computedRole + ")";
+                titleEl.innerHTML = "🛡️ Professor Console (" + computedRole + ")";
                 window.activeSessionRoleGlobal = computedRole;
               } else {
-                titleEl.innerText = "🏫 SITM Portal Assistant";
+                titleEl.innerHTML = "🏫 SITM Portal Assistant";
                 window.activeSessionRoleGlobal = "Student";
               }
             }, 1000);
@@ -222,12 +366,11 @@ router.post("/api/chat-ai", async (req, res) => {
     const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set");
     const hasAuthorizedPortalSession = (portalRole === "Teacher" || portalRole === "Admin" || portalRole === "Professor") || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
-    // Hard Core Security Verification Check: Block any update requests from Student layouts
     if (isTeacherIntendingUpload && !hasAuthorizedPortalSession) {
       return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating cloud cluster records." });
     }
 
-    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC (Strictly Guarded)
+    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC
     if (isTeacherIntendingUpload && hasAuthorizedPortalSession && (lowerQ.includes("java") || lowerQ.includes("rprog") || lowerQ.includes("os") || lowerQ.includes("coa") || lowerQ.includes("unix"))) {
       const allNumbers = question.match(/\d+/g);
       const rollMatch = question.match(/(?:roll|no|number)\s*[:\s]*(\d+)/i) || (allNumbers ? { 1: allNumbers[0] } : null);
@@ -303,14 +446,12 @@ router.post("/api/chat-ai", async (req, res) => {
     }
 
     // 🔍 PRIORITY 3: ADVANCED PERFORMANCE SEARCH MARKS LOGIC
-    // Extracted target selection explicitly if user asks "iski" or broad context contains roll details
     let targetRollNumber = null;
     const matchDigits = question.match(/\d+/);
     
     if (matchDigits) {
       targetRollNumber = matchDigits[0];
     } else if (history && history.length > 0) {
-      // Pull previous context scan from active history array to determine context matching
       for (let i = history.length - 1; i >= 0; i--) {
         const prevMatch = history[i].content.match(/\d+/);
         if (prevMatch) { targetRollNumber = prevMatch[0]; break; }
@@ -346,7 +487,7 @@ router.post("/api/chat-ai", async (req, res) => {
       return res.status(200).json({ reply: `Roll Number ${targetRollNumber} ka performance data database cluster par active nahi mila.` });
     }
 
-    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (AURA Mode - Full Date & Day Engine)
+    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK
     const currentServerDate = new Date().toLocaleDateString('en-US', { 
       weekday: 'long', 
       day: 'numeric', 
