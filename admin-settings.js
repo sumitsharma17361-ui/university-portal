@@ -319,8 +319,12 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-        // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Strictly Strip out Injection Triggers)
-    let messagePayload = [{ role: "system", content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Guide portal users concisely. If a user asks to change, mutate, or update scores without authorized credentials, state that they lack structural authorization permissions." }];
+            // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Smart All-Rounder Mode Active)
+    let messagePayload = [{ 
+      role: "system", 
+      content: "You are the smart SITM Campus AI Assistant. The current year is 2026. You help users with college database queries, but you are also a fully capable general AI. If a user asks about the weather, general questions, coding, or everyday knowledge, answer them beautifully, helpfully, and enthusiastically! Do not restrict your knowledge." 
+    }];
+    
     if (history && Array.isArray(history)) {
       history.forEach(m => { if(m.role && m.content) messagePayload.push({ role: m.role, content: m.content }); });
     }
@@ -336,7 +340,10 @@ router.post("/api/chat-ai", async (req, res) => {
       hostname: 'api.groq.com',
       path: '/openai/v1/chat/completions',
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey }
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': 'Bearer ' + groqKey 
+      }
     }, (apiRes) => {
       let body = "";
       apiRes.on("data", (chunk) => body += chunk);
@@ -360,6 +367,5 @@ router.post("/api/chat-ai", async (req, res) => {
 });
 
 module.exports = router;
-
 
     
