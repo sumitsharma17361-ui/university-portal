@@ -5,6 +5,9 @@ const app = express();
 app.use(express.json());
 const adminSettings = require("./admin-settings");
 app.use("/", adminSettings);
+const viewResults = require("./view-results");
+app.use("/", viewResults);
+
 
 // Hardcoded Secure MongoDB Connection
 const MONGO_URI = "mongodb+srv://sumitsharma17361_db_user:S26CzHyqdBgLuFuw@cluster0.ihz6w8n.mongodb.net/?appName=Cluster0";
