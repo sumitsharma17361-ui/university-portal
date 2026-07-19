@@ -92,17 +92,17 @@ router.use((req, res, next) => {
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question } = req.body;
-    const match = question.match(/\\b\\d{1,4}\\b/);
+    const match = question.match(/\b\d{1,4}\b/);
     if (match) {
       const StudentModel = mongoose.model("Student");
       const d = await StudentModel.findOne({ roll: match[0] });
       if (d) {
         const total = d.subjects.java + d.subjects.rProg + d.subjects.os + d.subjects.coa + d.subjects.unixLinux;
         return res.status(200).json({ 
-          reply: \`👤 Name: \${d.name}\\n🔢 Roll: \${d.roll}\\n📅 DOB: \${d.dob}\\n📈 Grand Total: \${total}/500\` 
+          reply: "👤 Name: " + d.name + "\n🔢 Roll: " + d.roll + "\n📅 DOB: " + d.dob + "\n📈 Grand Total: " + total + "/500"
         });
       }
-      return res.status(200).json({ reply: \`❌ Roll \${match[0]} ka data nahi mila.\` });
+      return res.status(200).json({ reply: "❌ Roll " + match[0] + " ka data nahi mila." });
     }
     return res.status(200).json({ reply: "SITM Database AI Desk active. System normal." });
   } catch (error) { res.status(500).json({ reply: "Glitch detected." }); }
