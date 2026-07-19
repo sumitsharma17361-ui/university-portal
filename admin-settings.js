@@ -217,7 +217,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY (WITH DYNAMIC HIDE TOGGLE SYNC EYE)
+// 🎯 MAIN ROUTER ENTRY
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history, portalRole } = req.body;
@@ -225,12 +225,36 @@ router.post("/api/chat-ai", async (req, res) => {
     const StudentModel = mongoose.model("Student");
     const ConfigModel = mongoose.model("Config");
 
-    const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set");
+    const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set") || lowerQ.includes("change");
     const hasAuthorizedPortalSession = (portalRole === "Teacher" || portalRole === "Admin" || portalRole === "Professor") || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
-    // 🔴 SECURITY privilege blocking for data mutations
     if (isTeacherIntendingUpload && !hasAuthorizedPortalSession) {
       return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating cloud cluster records." });
+    }
+
+    // ⭐ NEW ADDITION: DIRECT CHATBOX DATE OF BIRTH (DOB) LIVE MUTATION LAYER
+    if (isTeacherIntendingUpload && hasAuthorizedPortalSession && (lowerQ.includes("dob") || lowerQ.includes("birth") || lowerQ.includes("date"))) {
+      const rollMatch = question.match(/(?:roll|no|number)\s*[:\s]*(\d+)/i) || question.match(/\b\d{2}\b/);
+      const dobMatch = question.match(/(\d{2}\/\d{2}\/\d{4})/);
+
+      if (rollMatch && dobMatch) {
+        const targetRoll = rollMatch[1] || rollMatch[0];
+        const targetDob = dobMatch[1];
+
+        const updatedDoc = await StudentModel.findOneAndUpdate(
+          { roll: targetRoll },
+          { $set: { dob: targetDob, uploadedAt: new Date() } },
+          { new: true }
+        );
+
+        if (updatedDoc) {
+          return res.status(200).json({ 
+            reply: `🎯 Live DOB Update Applied Successfully!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ki Date of Birth database mein update karke successfully *${targetDob}* kar di gayi hai.` 
+          });
+        } else {
+          return res.status(200).json({ reply: `❌ Roll Number ${targetRoll} database mein exist nahi karta hai.` });
+        }
+      }
     }
 
     // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC
@@ -242,7 +266,7 @@ router.post("/api/chat-ai", async (req, res) => {
         const targetRoll = rollMatch[1];
         let targetScore = null;
         for (let num of allNumbers) {
-          if (num !== targetRoll) { targetScore = Number(num); break; }
+          if (num !== targetRoll && num.length <= 3) { targetScore = Number(num); break; }
         }
 
         if (targetScore !== null && targetScore >= 0 && targetScore <= 100) {
@@ -283,18 +307,16 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-    // 🔍 PRIORITY 3: ADVANCED PERFORMANCE SEARCH MARKS LOGIC (WITH GLOBAL CONFIG VISIBILITY GATECHECK)
+    // 🔍 PRIORITY 3: ADVANCED PERFORMANCE SEARCH MARKS LOGIC
     if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
-      // 🛡️ Fetch the live publishing configuration status directly from DB
       let globalConfig = await ConfigModel.findOne({ configId: "global" });
       const isSystemWithheld = !globalConfig || !globalConfig.isPublished;
 
-      // Enforcement Rule: Block if withheld AND the searching session is NOT a teacher/admin
       if (isSystemWithheld && !hasAuthorizedPortalSession) {
         return res.status(200).json({ reply: "❌ Result is currently Hidden/Withheld by Administration." });
       }
 
-      const match = question.match(/\d+/);
+      const match = question.match(/\b\d{1,4}\b/);
       if (match) {
         const d = await StudentModel.findOne({ roll: match[0] });
         if (d) {
@@ -318,7 +340,7 @@ router.post("/api/chat-ai", async (req, res) => {
           const backDetails = failedSubjects.length > 0 ? `⚠️ Back Details:\n- ${failedSubjects.join("\n- ")}` : "🎉 Performance Status: Excellent! Clear pass.";
 
           return res.status(200).json({ 
-            reply: `📊 *Performance Card (Roll: ${d.roll})*\n👤 Name: ${d.name}\n---------------------------\n🔹 Java: ${sub.java}/100\n🔹 R Prog: ${sub.rProg}/100\n🔹 OS: ${sub.os}/100\n🔹 COA: ${sub.coa}/100\n🔹 Unix: ${sub.unixLinux}/100\n---------------------------\n📈 Grand Total: ${total}/500 (${pct}%)\n⚖️ Status: ${status}\n\n⭐ Highest Subject: ${highestSub.name} (${highestSub.score}/100)\n${backDetails}` 
+            reply: `📊 *Performance Card (Roll: ${d.roll})*\n👤 Name: ${d.name}\n📅 DOB: ${d.dob}\n---------------------------\n🔹 Java: ${sub.java}/100\n🔹 R Prog: ${sub.rProg}/100\n🔹 OS: ${sub.os}/100\n🔹 COA: ${sub.coa}/100\n🔹 Unix: ${sub.unixLinux}/100\n---------------------------\n📈 Grand Total: ${total}/500 (${pct}%)\n⚖️ Status: ${status}\n\n⭐ Highest Subject: ${highestSub.name} (${highestSub.score}/100)\n${backDetails}` 
           });
         }
         return res.status(200).json({ reply: `❌ Roll Number ${match[0]} ka performance data database cluster par active nahi mila.` });
