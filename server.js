@@ -88,6 +88,10 @@ app.post("/api/get-result", async (req, res) => {
   } catch (error) { res.status(500).json({ success: false, error: error.message }); }
 });
 
+/* ========================================================================================= */
+/* 📍 LINE CHECKPOINT 100: DATABASE DATA FETCH ROUTES STARTING HERE */
+/* ========================================================================================= */
+
 app.get("/api/all-results", async (req, res) => {
   try {
     const allStudents = await Student.find({}).sort({ uploadedAt: -1 });
@@ -186,7 +190,12 @@ app.get("/", (req, res) => {
 
       <!-- STAFF DASHBOARD -->
       <div id="teacherDashboardCard" class="card">
-        <h2>Admission & Profile Registry (<span id="roleBadge"></span>)</h2>
+        <h2>Admission & Profile Registry</h2>
+
+/* ========================================================================================= */
+/* 📍 LINE CHECKPOINT 200: STAFF LAYOUT SECTIONS LOADED SUCCESSFULLY */
+/* ========================================================================================= */
+
         <div id="adminPanel" class="admin-controls">
            <p style="font-size:0.85rem; margin-bottom:10px;">Status: <b id="publishStatusTxt">Checking...</b></p>
            <button class="btn btn-primary" style="background:#8b5cf6;" onclick="togglePublish()">Toggle Publish/Hide System</button>
@@ -263,17 +272,20 @@ app.get("/", (req, res) => {
           if(pass === 'admin_secure_2026') {
             currentRole = "Admin"; status.innerHTML = "<span class='success'>✓ Authorized</span>";
             document.getElementById('adminPanel').style.display = "block";
-            document.getElementById('roleBadge').innerText = "Admin";
             checkPublishStatus(); openDashboard();
           } else if(pass === 'cse_teacher_2026') {
             currentRole = "Teacher"; status.innerHTML = "<span class='success'>✓ Authorized</span>";
             document.getElementById('adminPanel').style.display = "none";
-            document.getElementById('roleBadge').innerText = "Teacher"; openDashboard();
+            openDashboard();
           } else { status.innerHTML = "<span class='error'>❌ Refused</span>"; }
         }
 
+/* ========================================================================================= */
+/* 📍 LINE CHECKPOINT 300: MIDDLE SCRIPTS AND AJAX REQUEST PIPELINE */
+/* ========================================================================================= */
+
         function openDashboard() {
-          setTimeout(() => {
+          setTimeout(function() {
             document.getElementById('teacherAuthCard').classList.remove('visible');
             document.getElementById('teacherDashboardCard').classList.add('visible');
             document.getElementById('mainNav').style.display = 'none';
@@ -355,6 +367,10 @@ app.get("/", (req, res) => {
           } catch(err) { status.innerHTML = "<span class='error'>❌ Sync Broken</span>"; }
         }
 
+/* ========================================================================================= */
+/* 📍 LINE CHECKPOINT 400: PROFILE RENDERING & ENGINE STABILITY ROUTINES */
+/* ========================================================================================= */
+
         async function fetchStudentResult() {
           const roll = document.getElementById('studentRoll').value;
           let dob = document.getElementById('studentDob').value;
@@ -427,7 +443,7 @@ app.get("/", (req, res) => {
                 const container = document.getElementById('pdf-container');
                 container.innerHTML = pdfOut.htmlContent; container.style.display = 'block';
                 const opt = { margin: 15, filename: 'SITM_Admission_Profile_' + roll + '.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }};
-                setTimeout(() => { html2pdf().set(opt).from(container).save().then(() => { container.style.display = 'none'; }); }, 500);
+                setTimeout(function() { html2pdf().set(opt).from(container).save().then(function() { container.style.display = 'none'; }); }, 500);
               }
             }
           } catch(err) { alert("Compiling pipeline disrupted."); }
@@ -440,3 +456,8 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log("Server active on " + PORT));
+
+/* ========================================================================================= */
+/* 📍 LINE CHECKPOINT 500: END OF SEVER CONFIGURATION FILE */
+/* ========================================================================================= */
+                                     
