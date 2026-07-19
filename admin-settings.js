@@ -382,12 +382,16 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-    // 🔍 PRIORITY 2.3: LIVE DATABASE MARKS HIGHEST / LOWEST ANALYSIS FILTER
-    if (lowerQ.includes("sabse jyada") || lowerQ.includes("sabse zyada") || lowerQ.includes("highest marks") || lowerQ.includes("topper") || lowerQ.includes("sabse kam") || lowerQ.includes("lowest marks") || lowerQ.includes("minimum score")) {
+    // 🔍 PRIORITY 2.3: LIVE DATABASE MARKS HIGHEST / LOWEST ANALYSIS FILTER (Robust Keywords Included)
+    if (
+      lowerQ.includes("sabse jyada") || lowerQ.includes("sabse zyada") || 
+      lowerQ.includes("highest") || lowerQ.includes("topper") || lowerQ.includes("maximum") || lowerQ.includes("max ") ||
+      lowerQ.includes("sabse kam") || lowerQ.includes("lowest") || lowerQ.includes("minimum") || lowerQ.includes("min ")
+    ) {
       const allStudents = await StudentModel.find({});
       if (allStudents && allStudents.length > 0) {
         let selectedStudent = null;
-        let isHighestSearch = lowerQ.includes("jyada") || lowerQ.includes("zyada") || lowerQ.includes("highest") || lowerQ.includes("topper");
+        let isHighestSearch = lowerQ.includes("jyada") || lowerQ.includes("zyada") || lowerQ.includes("highest") || lowerQ.includes("topper") || lowerQ.includes("maximum") || lowerQ.includes("max");
         let targetScoreThreshold = isHighestSearch ? -1 : 999999;
 
         allStudents.forEach(st => {
@@ -550,4 +554,3 @@ BEHAVIOR & TECHNICAL EXPERTISE:
 });
 
 module.exports = router;
- 
