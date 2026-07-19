@@ -87,7 +87,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injection Layer
+// Dynamic Injection Layer (Hybrid Form Visibility Scraper Patch)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -140,32 +140,43 @@ router.use((req, res, next) => {
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
             window.activeSessionRoleGlobal = "Student";
 
-            // 🎯 ULTRA PRECISION VISIBILITY CHECKER
+            // 🎯 HEURISTIC MULTI-SELECTOR INTERFACE DETECTOR
             setInterval(() => {
               const titleEl = document.getElementById('uniBotTitle');
               
-              // Find your actual Teacher Section wrapper container in index.html
-              const teacherSection = document.getElementById('teacherSection') || 
-                                     document.getElementById('teacherDashboard') || 
-                                     document.querySelector('[id*="teacher"]') || 
-                                     document.querySelector('[id*="Teacher"]');
+              // Trace all potential text headers and layout anchors simultaneously
+              const fullText = document.body.innerText.toLowerCase();
+              const hasTeacherText = fullText.includes("teacher") || fullText.includes("dashboard") || fullText.includes("records");
               
-              let isVisible = false;
-              if (teacherSection) {
-                const style = window.getComputedStyle(teacherSection);
-                if (style.display !== 'none' && style.visibility !== 'hidden' && teacherSection.offsetHeight > 0) {
-                  isVisible = true;
+              // Trace form inputs specifically mapped inside the teacher control layout shell
+              const inputs = Array.from(document.querySelectorAll('input, label'));
+              const hasTeacherFormFields = inputs.some(el => {
+                const txt = (el.textContent || el.placeholder || "").toLowerCase();
+                return txt.includes("student name") || txt.includes("date of birth") || txt.includes("subjects");
+              });
+
+              // Check visibility of any section wrapper that contains teacher UI strings
+              let isDashboardVisible = false;
+              const headings = Array.from(document.querySelectorAll('h1, h2, h3, div'));
+              for(let el of headings) {
+                if(el.innerText && el.innerText.toLowerCase().includes("records dashboard")) {
+                  const style = window.getComputedStyle(el);
+                  if(style.display !== 'none' && el.offsetHeight > 0) {
+                    isDashboardVisible = true;
+                    break;
+                  }
                 }
               }
 
-              if (isVisible) {
+              // Evaluate combined state validation logic
+              if ((hasTeacherText && hasTeacherFormFields) || isDashboardVisible) {
                 titleEl.innerText = "🛡️ Professor Console (Teacher)";
                 window.activeSessionRoleGlobal = "Teacher";
               } else {
                 titleEl.innerText = "🏫 SITM Portal Assistant";
                 window.activeSessionRoleGlobal = "Student";
               }
-            }, 200);
+            }, 300);
 
             window.addEventListener('DOMContentLoaded', () => {
               const logs = document.getElementById('uniChatLogs');
@@ -197,8 +208,11 @@ router.use((req, res, next) => {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
               
-              // Dynamic verification stack directly synchronized
-              const currentActiveRole = window.activeSessionRoleGlobal || "Student";
+              // Re-verify form structure before packing transmission layer
+              const fullText = document.body.innerText.toLowerCase();
+              const inputs = Array.from(document.querySelectorAll('input'));
+              const hasTeacherFormFields = inputs.some(el => (el.placeholder || "").toLowerCase().includes("name") || (el.placeholder || "").toLowerCase().includes("birth"));
+              const currentActiveRole = (fullText.includes("dashboard") && hasTeacherFormFields) || window.activeSessionRoleGlobal === "Teacher" ? "Teacher" : "Student";
 
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
               const load = document.createElement('div'); load.className = 'chat-msg bot'; load.innerText = '⏳ Syncing Data...'; logs.appendChild(load); logs.scrollTop = logs.scrollHeight;
