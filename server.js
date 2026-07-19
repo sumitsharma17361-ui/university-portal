@@ -197,7 +197,6 @@ app.get("/", (req, res) => {
 
         <button class="btn" style="background:#38bdf8; color:#0f172a;" onclick="fetchStudentResult()">View Marksheet</button>
         <div id="studentStatus" class="status-msg"></div>
-        
         <div id="marksheetView" style="display:none;" class="marksheet"></div>
         <button id="downloadPdfBtn" class="btn btn-secondary" style="display:none;" onclick="downloadPDF()">⬇️ Download Provisional PDF</button>
       </div>
@@ -328,7 +327,7 @@ app.get("/", (req, res) => {
           } catch(e) {}
         }
 
-                async function viewAllRecords() {
+        async function viewAllRecords() {
           const container = document.getElementById('allRecordsContainer');
           const list = document.getElementById('recordsList');
           
@@ -337,18 +336,18 @@ app.get("/", (req, res) => {
             const out = await res.json();
             
             if(out.success && out.data.length > 0) {
-              list.innerHTML = out.data.map(d => `
+              list.innerHTML = out.data.map(d => \`
                 <div class="record-item" style="display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 0; border-bottom: 1px solid #334155;">
                   <div style="width: 100%; display: flex; justify-content: space-between; font-weight: bold; color: #f1f5f9;">
-                    <span>👤 ${d.name} (Roll: ${d.roll})</span>
+                    <span>👤 \${d.name} (Roll: \${d.roll})</span>
                     <span style="color: #4ade80; font-size: 0.8rem;">Saved</span>
                   </div>
-                  <div style="font-size: 0.8rem; color: #94a3b8;">📅 DOB: ${d.dob} | 🎓 Course: ${d.course || 'B.Tech CSE'}</div>
+                  <div style="font-size: 0.8rem; color: #94a3b8;">📅 DOB: \${d.dob} | 🎓 Course: \${d.course || 'B.Tech CSE'}</div>
                   <div style="font-size: 0.8rem; color: #38bdf8; margin-top: 2px;">
-                    📚 Java: ${d.subjects?.java} | R: ${d.subjects?.rProg} | OS: ${d.subjects?.os} | COA: ${d.subjects?.coa} | Unix: ${d.subjects?.unixLinux}
+                    📚 Java: \${d.subjects?.java} | R: \${d.subjects?.rProg} | OS: \${d.subjects?.os} | COA: \${d.subjects?.coa} | Unix: \${d.subjects?.unixLinux}
                   </div>
                 </div>
-              `).join('');
+              \`).join('');
               container.style.display = 'block';
             } else {
               list.innerHTML = "<p style='text-align:center; font-size:0.85rem; color:#94a3b8;'>No records found in DB.</p>";
@@ -358,9 +357,6 @@ app.get("/", (req, res) => {
             alert("Error fetching system database records.");
           }
         }
-        
-
-        
 
         async function publishResult() {
           const status = document.getElementById('publishStatus');
@@ -461,7 +457,6 @@ app.get("/", (req, res) => {
           }
         }
 
-        // PDF Generation Script (Permanent Blank-Screen Fix Integration)
         function downloadPDF() {
           const content = document.getElementById('marksheetView').innerHTML;
           const container = document.getElementById('pdf-container');
@@ -489,5 +484,3 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-  
