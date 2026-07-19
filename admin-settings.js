@@ -87,7 +87,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injection Layer (Hybrid Form Visibility Scraper Patch)
+// Dynamic Injection Layer
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -140,36 +140,17 @@ router.use((req, res, next) => {
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
             window.activeSessionRoleGlobal = "Student";
 
-            // 🎯 HEURISTIC MULTI-SELECTOR INTERFACE DETECTOR
             setInterval(() => {
               const titleEl = document.getElementById('uniBotTitle');
-              
-              // Trace all potential text headers and layout anchors simultaneously
               const fullText = document.body.innerText.toLowerCase();
-              const hasTeacherText = fullText.includes("teacher") || fullText.includes("dashboard") || fullText.includes("records");
               
-              // Trace form inputs specifically mapped inside the teacher control layout shell
               const inputs = Array.from(document.querySelectorAll('input, label'));
               const hasTeacherFormFields = inputs.some(el => {
                 const txt = (el.textContent || el.placeholder || "").toLowerCase();
                 return txt.includes("student name") || txt.includes("date of birth") || txt.includes("subjects");
               });
 
-              // Check visibility of any section wrapper that contains teacher UI strings
-              let isDashboardVisible = false;
-              const headings = Array.from(document.querySelectorAll('h1, h2, h3, div'));
-              for(let el of headings) {
-                if(el.innerText && el.innerText.toLowerCase().includes("records dashboard")) {
-                  const style = window.getComputedStyle(el);
-                  if(style.display !== 'none' && el.offsetHeight > 0) {
-                    isDashboardVisible = true;
-                    break;
-                  }
-                }
-              }
-
-              // Evaluate combined state validation logic
-              if ((hasTeacherText && hasTeacherFormFields) || isDashboardVisible) {
+              if (fullText.includes("records dashboard") && hasTeacherFormFields) {
                 titleEl.innerText = "🛡️ Professor Console (Teacher)";
                 window.activeSessionRoleGlobal = "Teacher";
               } else {
@@ -208,11 +189,7 @@ router.use((req, res, next) => {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
               
-              // Re-verify form structure before packing transmission layer
-              const fullText = document.body.innerText.toLowerCase();
-              const inputs = Array.from(document.querySelectorAll('input'));
-              const hasTeacherFormFields = inputs.some(el => (el.placeholder || "").toLowerCase().includes("name") || (el.placeholder || "").toLowerCase().includes("birth"));
-              const currentActiveRole = (fullText.includes("dashboard") && hasTeacherFormFields) || window.activeSessionRoleGlobal === "Teacher" ? "Teacher" : "Student";
+              const currentActiveRole = window.activeSessionRoleGlobal || "Student";
 
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
               const load = document.createElement('div'); load.className = 'chat-msg bot'; load.innerText = '⏳ Syncing Data...'; logs.appendChild(load); logs.scrollTop = logs.scrollHeight;
@@ -240,16 +217,18 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY
+// 🎯 MAIN ROUTER ENTRY (WITH DYNAMIC HIDE TOGGLE SYNC EYE)
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history, portalRole } = req.body;
     const lowerQ = question.toLowerCase();
     const StudentModel = mongoose.model("Student");
+    const ConfigModel = mongoose.model("Config");
 
     const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set");
     const hasAuthorizedPortalSession = (portalRole === "Teacher" || portalRole === "Admin" || portalRole === "Professor") || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
+    // 🔴 SECURITY privilege blocking for data mutations
     if (isTeacherIntendingUpload && !hasAuthorizedPortalSession) {
       return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating cloud cluster records." });
     }
@@ -281,13 +260,7 @@ router.post("/api/chat-ai", async (req, res) => {
 
             const updatedDoc = await StudentModel.findOneAndUpdate({ roll: targetRoll }, { $set: updateObject }, { new: true });
             if (updatedDoc) {
-              const sub = updatedDoc.subjects;
-              const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
-              return res.status(200).json({ 
-                reply: `🎯 Live Update Applied Successfully!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ke database mein ${updateField.split('.')[1]} ko update karke ${targetScore} kar diya hai.` 
-              });
-            } else {
-              return res.status(200).json({ reply: `❌ Roll Number ${targetRoll} pehle se database mein exist nahi karta hai.` });
+              return res.status(200).json({ reply: `🎯 Live Update Applied Successfully!\n\nRoll Number ${targetRoll} ke database mein ${updateField.split('.')[1]} ko update karke ${targetScore} kar diya hai.` });
             }
           }
         }
@@ -310,8 +283,17 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-    // 🔍 PRIORITY 3: ADVANCED PERFORMANCE SEARCH MARKS LOGIC
+    // 🔍 PRIORITY 3: ADVANCED PERFORMANCE SEARCH MARKS LOGIC (WITH GLOBAL CONFIG VISIBILITY GATECHECK)
     if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
+      // 🛡️ Fetch the live publishing configuration status directly from DB
+      let globalConfig = await ConfigModel.findOne({ configId: "global" });
+      const isSystemWithheld = !globalConfig || !globalConfig.isPublished;
+
+      // Enforcement Rule: Block if withheld AND the searching session is NOT a teacher/admin
+      if (isSystemWithheld && !hasAuthorizedPortalSession) {
+        return res.status(200).json({ reply: "❌ Result is currently Hidden/Withheld by Administration." });
+      }
+
       const match = question.match(/\d+/);
       if (match) {
         const d = await StudentModel.findOne({ roll: match[0] });
