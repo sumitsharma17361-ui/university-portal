@@ -118,8 +118,6 @@ router.use((req, res, next) => {
               transition: all 0.3s ease;
             }
             #uniChatLauncher:hover { transform: scale(1.05); }
-            
-            /* 🔥 RESPONSIVE MOBILE POSITIONING ENGINE */
             #uniChatBox { 
               width: 340px; 
               max-width: calc(100vw - 40px);
@@ -384,6 +382,40 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
+    // 🔍 PRIORITY 2.3: LIVE DATABASE MARKS HIGHEST / LOWEST ANALYSIS FILTER
+    if (lowerQ.includes("sabse jyada") || lowerQ.includes("sabse zyada") || lowerQ.includes("highest marks") || lowerQ.includes("topper") || lowerQ.includes("sabse kam") || lowerQ.includes("lowest marks") || lowerQ.includes("minimum score")) {
+      const allStudents = await StudentModel.find({});
+      if (allStudents && allStudents.length > 0) {
+        let selectedStudent = null;
+        let isHighestSearch = lowerQ.includes("jyada") || lowerQ.includes("zyada") || lowerQ.includes("highest") || lowerQ.includes("topper");
+        let targetScoreThreshold = isHighestSearch ? -1 : 999999;
+
+        allStudents.forEach(st => {
+          const s = st.subjects;
+          const grandTotal = s.java + s.rProg + s.os + s.coa + s.unixLinux;
+          if (isHighestSearch && grandTotal > targetScoreThreshold) {
+            targetScoreThreshold = grandTotal;
+            selectedStudent = st;
+          } else if (!isHighestSearch && grandTotal < targetScoreThreshold) {
+            targetScoreThreshold = grandTotal;
+            selectedStudent = st;
+          }
+        });
+
+        if (selectedStudent) {
+          const sub = selectedStudent.subjects;
+          const pct = ((targetScoreThreshold / 500) * 100).toFixed(2);
+          const typeLabel = isHighestSearch ? "🏆 Database Topper (Sabse Jyada Marks)" : "📉 Lowest Score Record (Sabse Kam Marks)";
+          
+          return res.status(200).json({
+            reply: `${typeLabel}\n\nName: ${selectedStudent.name} (Roll: ${selectedStudent.roll})\nDate of Birth: ${selectedStudent.dob || "N/A"}\n---------------------------\nJava: ${sub.java}/100\nR Prog: ${sub.rProg}/100\nOS: ${sub.os}/100\nCOA: ${sub.coa}/100\nUnix: ${sub.unixLinux}/100\n---------------------------\nGrand Total: ${targetScoreThreshold}/500 (${pct}%)\nStatus: ${sub.java>=33&&sub.rProg>=33&&sub.os>=33&&sub.coa>=33&&sub.unixLinux>=33 ? "PASSED SECURELY" : "FAILED / BACK"}`
+          });
+        }
+      } else {
+        return res.status(200).json({ reply: "❌ Database Cluster par abhi tak koi bhi student records available nahi mila." });
+      }
+    }
+
     // 🔍 PRIORITY 2.5: BULK FETCH FOR "ALL STUDENTS" CLAUSE
     if (lowerQ.includes("all student") || lowerQ.includes("all results") || lowerQ.includes("saare result") || lowerQ.includes("sabka result")) {
       const students = await StudentModel.find({});
@@ -518,3 +550,4 @@ BEHAVIOR & TECHNICAL EXPERTISE:
 });
 
 module.exports = router;
+ 
