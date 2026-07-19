@@ -87,7 +87,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injection Layer (Strict Dynamic Local Storage Destruction Logic)
+// Dynamic Injection Layer
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -138,28 +138,34 @@ router.use((req, res, next) => {
         const chatbotLogicScript = `
           <script>
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
-            
-            // Real-time UI Scraper to enforce single-page routing alignment
+            window.activeSessionRoleGlobal = "Student";
+
+            // 🎯 ULTRA PRECISION VISIBILITY CHECKER
             setInterval(() => {
               const titleEl = document.getElementById('uniBotTitle');
               
-              // 1. Scrape structural indicators on the active page
-              const teacherDashboardActive = !!document.querySelector('h2')?.innerText?.toLowerCase().includes("teacher") || 
-                                           !!document.body.innerText.toLowerCase().includes("records dashboard (teacher)") ||
-                                           !!document.getElementById('roleBadge')?.innerText?.toLowerCase().includes("teacher");
+              // Find your actual Teacher Section wrapper container in index.html
+              const teacherSection = document.getElementById('teacherSection') || 
+                                     document.getElementById('teacherDashboard') || 
+                                     document.querySelector('[id*="teacher"]') || 
+                                     document.querySelector('[id*="Teacher"]');
+              
+              let isVisible = false;
+              if (teacherSection) {
+                const style = window.getComputedStyle(teacherSection);
+                if (style.display !== 'none' && style.visibility !== 'hidden' && teacherSection.offsetHeight > 0) {
+                  isVisible = true;
+                }
+              }
 
-              // 2. Enforce strict programmatic role configuration
-              if (teacherDashboardActive) {
+              if (isVisible) {
                 titleEl.innerText = "🛡️ Professor Console (Teacher)";
                 window.activeSessionRoleGlobal = "Teacher";
               } else {
                 titleEl.innerText = "🏫 SITM Portal Assistant";
                 window.activeSessionRoleGlobal = "Student";
-                if (typeof currentRole !== 'undefined') {
-                  currentRole = "Student";
-                }
               }
-            }, 300);
+            }, 200);
 
             window.addEventListener('DOMContentLoaded', () => {
               const logs = document.getElementById('uniChatLogs');
@@ -191,9 +197,8 @@ router.use((req, res, next) => {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
               
-              // Direct dynamic scraper call execution before packing network transmission
-              const teacherDashboardActive = !!document.body.innerText.toLowerCase().includes("records dashboard (teacher)");
-              const currentActiveRole = teacherDashboardActive ? "Teacher" : "Student";
+              // Dynamic verification stack directly synchronized
+              const currentActiveRole = window.activeSessionRoleGlobal || "Student";
 
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
               const load = document.createElement('div'); load.className = 'chat-msg bot'; load.innerText = '⏳ Syncing Data...'; logs.appendChild(load); logs.scrollTop = logs.scrollHeight;
@@ -221,7 +226,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY (ROBUST CONVERSATIONAL ALIGNMENT SPECIFICATION)
+// 🎯 MAIN ROUTER ENTRY
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history, portalRole } = req.body;
@@ -231,12 +236,11 @@ router.post("/api/chat-ai", async (req, res) => {
     const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set");
     const hasAuthorizedPortalSession = (portalRole === "Teacher" || portalRole === "Admin" || portalRole === "Professor") || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
-    // 🔴 SECURE VERIFICATION BREAKING SYSTEM (Forced Blocking for Students)
     if (isTeacherIntendingUpload && !hasAuthorizedPortalSession) {
       return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating cloud cluster records." });
     }
 
-    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC (Guarded)
+    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC
     if (isTeacherIntendingUpload && hasAuthorizedPortalSession && (lowerQ.includes("java") || lowerQ.includes("rprog") || lowerQ.includes("os") || lowerQ.includes("coa") || lowerQ.includes("unix"))) {
       const allNumbers = question.match(/\d+/g);
       const rollMatch = question.match(/(?:roll|no|number)\s*[:\s]*(\d+)/i) || (allNumbers ? { 1: allNumbers[0] } : null);
