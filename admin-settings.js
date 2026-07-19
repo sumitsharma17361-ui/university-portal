@@ -87,7 +87,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Injection Layer (Strict Live State Validation)
+// Dynamic Injection Layer (Strict Dynamic Local Storage Destruction Logic)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -138,33 +138,28 @@ router.use((req, res, next) => {
         const chatbotLogicScript = `
           <script>
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
-            window.activeSessionRoleGlobal = "Student";
-
-            // Hard core active check loop to force destruction of roles on logout
+            
+            // Real-time UI Scraper to enforce single-page routing alignment
             setInterval(() => {
-              const activeBadge = document.getElementById('roleBadge') || document.querySelector('.user-role-text');
               const titleEl = document.getElementById('uniBotTitle');
               
-              let foundRoleText = "";
-              if (activeBadge && activeBadge.innerText) {
-                foundRoleText = activeBadge.innerText.trim().toLowerCase();
-              }
+              // 1. Scrape structural indicators on the active page
+              const teacherDashboardActive = !!document.querySelector('h2')?.innerText?.toLowerCase().includes("teacher") || 
+                                           !!document.body.innerText.toLowerCase().includes("records dashboard (teacher)") ||
+                                           !!document.getElementById('roleBadge')?.innerText?.toLowerCase().includes("teacher");
 
-              // Strict validation block
-              if (foundRoleText && (foundRoleText.includes("teacher") || foundRoleText.includes("admin") || foundRoleText.includes("professor"))) {
-                // If dashboard structure displays teacher frame natively
-                const displayRole = foundRoleText.includes("admin") ? "Admin" : "Teacher";
-                titleEl.innerText = "🛡️ Professor Console (" + displayRole + ")";
-                window.activeSessionRoleGlobal = displayRole;
+              // 2. Enforce strict programmatic role configuration
+              if (teacherDashboardActive) {
+                titleEl.innerText = "🛡️ Professor Console (Teacher)";
+                window.activeSessionRoleGlobal = "Teacher";
               } else {
-                // Force drop context immediately if UI role badge falls out or says student
                 titleEl.innerText = "🏫 SITM Portal Assistant";
                 window.activeSessionRoleGlobal = "Student";
                 if (typeof currentRole !== 'undefined') {
-                  currentRole = "Student"; // Reset shell engine variables
+                  currentRole = "Student";
                 }
               }
-            }, 500);
+            }, 300);
 
             window.addEventListener('DOMContentLoaded', () => {
               const logs = document.getElementById('uniChatLogs');
@@ -196,8 +191,9 @@ router.use((req, res, next) => {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
               
-              // Dynamic runtime authentication enforcement
-              const currentActiveRole = window.activeSessionRoleGlobal || "Student";
+              // Direct dynamic scraper call execution before packing network transmission
+              const teacherDashboardActive = !!document.body.innerText.toLowerCase().includes("records dashboard (teacher)");
+              const currentActiveRole = teacherDashboardActive ? "Teacher" : "Student";
 
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
               const load = document.createElement('div'); load.className = 'chat-msg bot'; load.innerText = '⏳ Syncing Data...'; logs.appendChild(load); logs.scrollTop = logs.scrollHeight;
@@ -225,7 +221,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY (ENFORCED COMPLIANCE STACK)
+// 🎯 MAIN ROUTER ENTRY (ROBUST CONVERSATIONAL ALIGNMENT SPECIFICATION)
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history, portalRole } = req.body;
@@ -235,7 +231,7 @@ router.post("/api/chat-ai", async (req, res) => {
     const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set");
     const hasAuthorizedPortalSession = (portalRole === "Teacher" || portalRole === "Admin" || portalRole === "Professor") || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
-    // 🔴 THE IRONCLAD GATEKEEPER: Pure verification breakdown
+    // 🔴 SECURE VERIFICATION BREAKING SYSTEM (Forced Blocking for Students)
     if (isTeacherIntendingUpload && !hasAuthorizedPortalSession) {
       return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating cloud cluster records." });
     }
@@ -270,7 +266,7 @@ router.post("/api/chat-ai", async (req, res) => {
               const sub = updatedDoc.subjects;
               const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
               return res.status(200).json({ 
-                reply: `🎯 Live Update Applied Successfully!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ke database mein os ko update karke ${targetScore} kar diya hai.` 
+                reply: `🎯 Live Update Applied Successfully!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ke database mein ${updateField.split('.')[1]} ko update karke ${targetScore} kar diya hai.` 
               });
             } else {
               return res.status(200).json({ reply: `❌ Roll Number ${targetRoll} pehle se database mein exist nahi karta hai.` });
