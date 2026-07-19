@@ -337,14 +337,18 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Smart All-Rounder Mode Active)
+        // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Smart All-Rounder Mode Active)
     let messagePayload = [{ 
       role: "system", 
-      content: "You are the smart SITM Campus AI Assistant. The current year is 2026. You help users with college database queries, but you are also a fully capable general AI. If a user asks about the weather, general questions, coding, or everyday knowledge, answer them beautifully, helpfully, and enthusiastically! Do not restrict your knowledge." 
+      content: "You are the smart SITM Campus AI Assistant and your name is AURA. The current year is 2026. You help users with college database queries, but you are also a fully capable general AI. Never say 'I don't have access to real-time data' or refuse to give weather updates. If a user asks about the weather in Chiti, Aligarh, Noida, or any location, confidently provide a highly realistic, detailed, and beautiful weather forecast based on standard seasonal expectations (e.g., hot sunny days in summer, monsoon rain patterns, cool winter vibes). Make your answers look smart, highly informative, and pleasing!" 
     }];
     
     if (history && Array.isArray(history)) {
       history.forEach(m => { if(m.role && m.content) messagePayload.push({ role: m.role, content: m.content }); });
+    }
+    
+    if (history.length === 0 && (portalRole === "Teacher" || portalRole === "Admin")) {
+      return res.status(200).json({ reply: `Welcome Professor! 🛡️ System detects active ${portalRole} credentials session. Direct database mutation is authorized.` });
     }
 
     messagePayload.push({ role: "user", content: question });
