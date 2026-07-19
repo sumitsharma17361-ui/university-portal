@@ -223,14 +223,32 @@ router.post("/api/chat-ai", async (req, res) => {
     const StudentModel = mongoose.model("Student");
 
     const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload") || lowerQ.includes("kardo") || lowerQ.includes("set");
+    const isTeacherIntendingDelete = lowerQ.includes("delete") || lowerQ.includes("remove") || lowerQ.includes("hata") || lowerQ.includes("clear record");
+    
     const hasAuthorizedPortalSession = (portalRole === "Teacher" || portalRole === "Admin" || portalRole === "Professor") || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
 
-    // Hard Core Security Verification Check: Block any update requests from Student layouts
-    if (isTeacherIntendingUpload && !hasAuthorizedPortalSession) {
-      return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating cloud cluster records." });
+    // 🛑 Security Check for Mutating/Deleting Cloud Records
+    if ((isTeacherIntendingUpload || isTeacherIntendingDelete) && !hasAuthorizedPortalSession) {
+      return res.status(200).json({ reply: "🛑 Operation Denied: Security Privilege Mismatch! Students are strictly prohibited from mutating or deleting cloud cluster records." });
     }
 
-    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC (Strictly Guarded)
+    // ⭐ PRIORITY 0: REAL-TIME HARD DELETION LOGIC (Chatbot Command Dynamic Execution)
+    if (isTeacherIntendingDelete && hasAuthorizedPortalSession) {
+      const match = question.match(/\d+/);
+      if (match) {
+        const targetRoll = match[0];
+        const deletedDoc = await StudentModel.findOneAndDelete({ roll: targetRoll });
+        if (deletedDoc) {
+          return res.status(200).json({ 
+            reply: `🗑️ **[DATABASE MUTATION SUCCESS]**\n\nRoll Number ${targetRoll} (${deletedDoc.name}) ka profile record MongoDB cloud cluster se permanently delete kar diya gaya hai! Ab list refresh karke check karein.` 
+          });
+        } else {
+          return res.status(200).json({ reply: `❌ Roll Number ${targetRoll} database cluster mein mila hi nahi, shayad pehle hi deleted hai.` });
+        }
+      }
+    }
+
+    // ⭐ PRIORITY 1: SMART SINGLE SUBJECT PARTIAL UPDATE LOGIC
     if (isTeacherIntendingUpload && hasAuthorizedPortalSession && (lowerQ.includes("java") || lowerQ.includes("rprog") || lowerQ.includes("os") || lowerQ.includes("coa") || lowerQ.includes("unix"))) {
       const allNumbers = question.match(/\d+/g);
       const rollMatch = question.match(/(?:roll|no|number)\s*[:\s]*(\d+)/i) || (allNumbers ? { 1: allNumbers[0] } : null);
@@ -319,7 +337,7 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-            // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Smart All-Rounder Mode Active)
+    // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (Smart All-Rounder Mode Active)
     let messagePayload = [{ 
       role: "system", 
       content: "You are the smart SITM Campus AI Assistant. The current year is 2026. You help users with college database queries, but you are also a fully capable general AI. If a user asks about the weather, general questions, coding, or everyday knowledge, answer them beautifully, helpfully, and enthusiastically! Do not restrict your knowledge." 
@@ -327,10 +345,6 @@ router.post("/api/chat-ai", async (req, res) => {
     
     if (history && Array.isArray(history)) {
       history.forEach(m => { if(m.role && m.content) messagePayload.push({ role: m.role, content: m.content }); });
-    }
-    
-    if (history.length === 0 && (portalRole === "Teacher" || portalRole === "Admin")) {
-      return res.status(200).json({ reply: `Welcome Professor! 🛡️ System detects active ${portalRole} credentials session. Direct database mutation is authorized.` });
     }
 
     messagePayload.push({ role: "user", content: question });
@@ -367,5 +381,7 @@ router.post("/api/chat-ai", async (req, res) => {
 });
 
 module.exports = router;
+
+
 
     
