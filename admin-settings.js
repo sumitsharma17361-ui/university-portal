@@ -254,8 +254,6 @@ router.post("/api/chat-ai", async (req, res) => {
 
             const updatedDoc = await StudentModel.findOneAndUpdate({ roll: targetRoll }, { $set: updateObject }, { new: true });
             if (updatedDoc) {
-              const sub = updatedDoc.subjects;
-              const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
               return res.status(200).json({ 
                 reply: `🎯 Live Update Applied Successfully!\n\nRoll Number ${targetRoll} (${updatedDoc.name}) ke database mein ${updateField.split('.')[1]} ko update karke ${targetScore} kar diya hai.` 
               });
@@ -283,16 +281,17 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-    // 🔍 NEW PRIORITY 2.5: BULK FETCH FOR "ALL STUDENTS" CLAUSE
+    // 🔍 PRIORITY 2.5: BULK FETCH FOR "ALL STUDENTS" CLAUSE
     if (lowerQ.includes("all student") || lowerQ.includes("all results") || lowerQ.includes("saare result") || lowerQ.includes("sabka result")) {
       const students = await StudentModel.find({});
       if (students && students.length > 0) {
-        let textReply = "📊 Database mein registered sabhi students ka live result niche diya gaya hai:\n\n";
+        let textReply = "📊 Database mein registered sabhi students ka live result:\n\n";
         students.forEach((d, idx) => {
           const sub = d.subjects;
           const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
           const pct = ((total / 500) * 100).toFixed(2);
           textReply += `${idx + 1}. Name: ${d.name} (Roll: ${d.roll})\n`;
+          textReply += `   DOB: ${d.dob || "N/A"}\n`;
           textReply += `   Java: ${sub.java} | R: ${sub.rProg} | OS: ${sub.os} | COA: ${sub.coa} | Unix: ${sub.unixLinux}\n`;
           textReply += `   Total: ${total}/500 (${pct}%)\n`;
           textReply += `   ---------------------------\n`;
@@ -304,36 +303,47 @@ router.post("/api/chat-ai", async (req, res) => {
     }
 
     // 🔍 PRIORITY 3: ADVANCED PERFORMANCE SEARCH MARKS LOGIC
-    if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
-      const match = question.match(/\d+/);
-      if (match) {
-        const d = await StudentModel.findOne({ roll: match[0] });
-        if (d) {
-          const sub = d.subjects;
-          const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
-          const pct = ((total / 500) * 100).toFixed(2);
-          
-          const subArray = [
-            { name: "Java Programming", score: sub.java }, { name: "R Programming", score: sub.rProg },
-            { name: "Operating Systems", score: sub.os }, { name: "Computer Org & Arch", score: sub.coa },
-            { name: "Unix / Linux Lab", score: sub.unixLinux }
-          ];
-
-          let highestSub = subArray[0]; let failedSubjects = [];
-          subArray.forEach(s => {
-            if (s.score > highestSub.score) highestSub = s;
-            if (s.score < 33) failedSubjects.push(`${s.name} (${s.score}/100)`);
-          });
-
-          const status = failedSubjects.length > 0 ? `FAILED / BACK (${failedSubjects.length} Subject)` : "PASSED SECURELY";
-          const backDetails = failedSubjects.length > 0 ? `Back Details:\n- ${failedSubjects.join("\n- ")}` : "Performance Status: Excellent! Clear pass.";
-
-          return res.status(200).json({ 
-            reply: `Performance Card (Roll: ${d.roll})\nName: ${d.name}\n---------------------------\nJava: ${sub.java}/100\nR Prog: ${sub.rProg}/100\nOS: ${sub.os}/100\nCOA: ${sub.coa}/100\nUnix: ${sub.unixLinux}/100\n---------------------------\nGrand Total: ${total}/500 (${pct}%)\nStatus: ${status}\n\nHighest Subject: ${highestSub.name} (${highestSub.score}/100)\n${backDetails}` 
-          });
-        }
-        return res.status(200).json({ reply: `Roll Number ${match[0]} ka performance data database cluster par active nahi mila.` });
+    // Extracted target selection explicitly if user asks "iski" or broad context contains roll details
+    let targetRollNumber = null;
+    const matchDigits = question.match(/\d+/);
+    
+    if (matchDigits) {
+      targetRollNumber = matchDigits[0];
+    } else if (history && history.length > 0) {
+      // Pull previous context scan from active history array to determine context matching
+      for (let i = history.length - 1; i >= 0; i--) {
+        const prevMatch = history[i].content.match(/\d+/);
+        if (prevMatch) { targetRollNumber = prevMatch[0]; break; }
       }
+    }
+
+    if ((lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result") || lowerQ.includes("dob") || lowerQ.includes("birth") || lowerQ.includes("iski")) && targetRollNumber) {
+      const d = await StudentModel.findOne({ roll: targetRollNumber });
+      if (d) {
+        const sub = d.subjects;
+        const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
+        const pct = ((total / 500) * 100).toFixed(2);
+        
+        const subArray = [
+          { name: "Java Programming", score: sub.java }, { name: "R Programming", score: sub.rProg },
+          { name: "Operating Systems", score: sub.os }, { name: "Computer Org & Arch", score: sub.coa },
+          { name: "Unix / Linux Lab", score: sub.unixLinux }
+        ];
+
+        let highestSub = subArray[0]; let failedSubjects = [];
+        subArray.forEach(s => {
+          if (s.score > highestSub.score) highestSub = s;
+          if (s.score < 33) failedSubjects.push(`${s.name} (${s.score}/100)`);
+        });
+
+        const status = failedSubjects.length > 0 ? `FAILED / BACK (${failedSubjects.length} Subject)` : "PASSED SECURELY";
+        const backDetails = failedSubjects.length > 0 ? `Back Details:\n- ${failedSubjects.join("\n- ")}` : "Performance Status: Excellent! Clear pass.";
+
+        return res.status(200).json({ 
+          reply: `Performance Card (Roll: ${d.roll})\nName: ${d.name}\nDate of Birth: ${d.dob || "Not Provided"}\n---------------------------\nJava: ${sub.java}/100\nR Prog: ${sub.rProg}/100\nOS: ${sub.os}/100\nCOA: ${sub.coa}/100\nUnix: ${sub.unixLinux}/100\n---------------------------\nGrand Total: ${total}/500 (${pct}%)\nStatus: ${status}\n\nHighest Subject: ${highestSub.name} (${highestSub.score}/100)\n${backDetails}` 
+        });
+      }
+      return res.status(200).json({ reply: `Roll Number ${targetRollNumber} ka performance data database cluster par active nahi mila.` });
     }
 
     // 🤖 PRIORITY 4: REGULAR ASSISTANT TALK STACK (AURA Mode - Full Date & Day Engine)
@@ -375,7 +385,6 @@ BEHAVIOR & TECHNICAL EXPERTISE:
 
     messagePayload.push({ role: "user", content: question });
 
-    // 🎯 MODEL PARAMETER OPTIMIZED TO LATEST STABLE ENGINE
     const postData = JSON.stringify({ model: "llama-3.3-70b-versatile", messages: messagePayload });
     const apiReq = https.request({
       hostname: 'api.groq.com',
