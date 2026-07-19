@@ -248,8 +248,8 @@ app.get("/", (req, res) => {
         <button class="btn btn-secondary" onclick="logoutTeacher()">← Logout Securely</button>
       </div>
 
-      <!-- PDF Hidden Layout Target Container -->
-      <div id="pdf-container" style="display:none; padding: 30px; color: black; background: white; font-family: 'Segoe UI', sans-serif;"></div>
+      <!-- PDF Hidden Layout Target Container (Styled for absolute printing clear view) -->
+      <div id="pdf-container" style="display:none; padding: 40px; color: #000000; background: #ffffff; font-family: 'Segoe UI', sans-serif;"></div>
 
       <script>
         let currentRole = "";
@@ -457,18 +457,27 @@ app.get("/", (req, res) => {
           }
         }
 
+        // 🎯 FIXED PDF COMPILING ENGINE
         function downloadPDF() {
           const content = document.getElementById('marksheetView').innerHTML;
           const container = document.getElementById('pdf-container');
           
-          container.innerHTML = content;
+          // Inject structured clean black text layout specifically formatted for PDF rendering
+          container.innerHTML = \`
+            <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 10px; margin-bottom: 20px;">
+              <h1 style="font-size: 24px; margin: 0; color: #000000;">SITM COLLEGE</h1>
+              <p style="font-size: 12px; margin: 5px 0 0 0; color: #555555;">Provisional Academic Performance Statement</p>
+            </div>
+            \${content}
+          \`;
+          
           container.style.display = 'block';
 
           const opt = {
-            margin:       10,
+            margin:       15,
             filename:     'Provisional_Marksheet.pdf',
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
           };
           
@@ -483,4 +492,4 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(\`Server running on port \${PORT}\`));
