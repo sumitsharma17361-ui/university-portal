@@ -283,6 +283,26 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
+    // 🔍 NEW PRIORITY 2.5: BULK FETCH FOR "ALL STUDENTS" CLAUSE
+    if (lowerQ.includes("all student") || lowerQ.includes("all results") || lowerQ.includes("saare result") || lowerQ.includes("sabka result")) {
+      const students = await StudentModel.find({});
+      if (students && students.length > 0) {
+        let textReply = "📊 Database mein registered sabhi students ka live result niche diya gaya hai:\n\n";
+        students.forEach((d, idx) => {
+          const sub = d.subjects;
+          const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
+          const pct = ((total / 500) * 100).toFixed(2);
+          textReply += `${idx + 1}. Name: ${d.name} (Roll: ${d.roll})\n`;
+          textReply += `   Java: ${sub.java} | R: ${sub.rProg} | OS: ${sub.os} | COA: ${sub.coa} | Unix: ${sub.unixLinux}\n`;
+          textReply += `   Total: ${total}/500 (${pct}%)\n`;
+          textReply += `   ---------------------------\n`;
+        });
+        return res.status(200).json({ reply: textReply });
+      } else {
+        return res.status(200).json({ reply: "❌ Database Cluster khali hai. Abhi tak koi bhi student record save nahi kiya gaya hai." });
+      }
+    }
+
     // 🔍 PRIORITY 3: ADVANCED PERFORMANCE SEARCH MARKS LOGIC
     if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
       const match = question.match(/\d+/);
@@ -331,16 +351,14 @@ router.post("/api/chat-ai", async (req, res) => {
 Today's current live date and day is strictly ${currentServerDate}. Always answer date and day queries accurately using this provided timestamp. 
 
 DATABASE INTEGRITY CRITICAL RULE:
-- When asked to show results, scores, or student performance cards, you must ONLY read and display authentic data provided within the system context or database variables. 
-- NEVER hallucinate, fake, or fabricate imaginary student names, roll numbers, or mock marks. If a specific student's record is not actively present in the query context or database payload, politely state that the record is not found in the database.
+- When asked to show results, scores, or student performance cards, you must NEVER hallucinate or output imaginary student data. The live backend will handle valid data queries. If you ever have to fallback, tell the user to provide a proper roll number to fetch records from the cloud database.
 
 CLEAN FORMATTING & VISUAL STYLE:
 - Do NOT dump raw, ugly markdown characters like '###', '***', or double asterisks '**' around labels. 
-- Present all results and text in a beautifully clean, neat, scannable, and human-readable format using proper spacing or standard bullet lists. 
 
 CRITICAL LANGUAGE CONSTRAINT:
 - Respond STRICTLY in the exact language or style the user uses. 
-- If the user asks a question in Hinglish/Roman Hindi (e.g., "Tumhara nam kya hai"), respond ONLY in clean, single-language Hinglish without adding any brackets, English translations, or repetitive lines. Never provide side-by-side translations.
+- If the user asks a question in Hinglish/Roman Hindi, respond ONLY in clean, single-language Hinglish without adding any brackets, English translations, or repetitive lines. Never provide side-by-side translations.
 
 BEHAVIOR & TECHNICAL EXPERTISE:
 1. Tone: Be highly conversational, empathetic, engaging, and witty. Talk like a helpful, genius peer.
