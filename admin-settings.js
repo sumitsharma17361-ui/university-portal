@@ -87,7 +87,7 @@ router.post("/api/update-portal-password", async (req, res) => {
   }
 });
 
-// Dynamic Premium Injection Layer (Dark Theme + Live Context Binding)
+// Dynamic Injection Layer (Dark Theme + Live Context Binding)
 router.use((req, res, next) => {
   if (req.path === "/") {
     const originalSend = res.send;
@@ -121,7 +121,7 @@ router.use((req, res, next) => {
                 <span id="uniBotTitle">🏫 SITM Portal Assistant</span>
                 <div class="chat-header-actions">
                   <button title="Clear Conversation" class="chat-action-btn" onclick="clearUniChatMemory()">🗑️</button>
-                  <button class="chat-action-btn" onclick="toggleUniChat()" style="font-weight:bold;">×</button>
+                  <button class="chat-action-btn" onclick="toggleUniChat()">×</button>
                 </div>
               </div>
               <div id="uniChatLogs" class="chat-logs">
@@ -139,7 +139,6 @@ router.use((req, res, next) => {
           <script>
             let currentChatHistory = JSON.parse(localStorage.getItem('sitm_chat_memory')) || [];
             
-            // Sync with active portal session roles seamlessly
             setInterval(() => {
               const activeBadge = document.getElementById('roleBadge');
               const titleEl = document.getElementById('uniBotTitle');
@@ -180,7 +179,6 @@ router.use((req, res, next) => {
               const input = document.getElementById('uniChatInput'), text = input.value.trim(), logs = document.getElementById('uniChatLogs');
               if(!text) return;
               
-              // Extract role token context from main UI shell framework variables
               const currentActiveRole = typeof currentRole !== 'undefined' ? currentRole : "";
 
               const u = document.createElement('div'); u.className = 'chat-msg user'; u.innerText = text; logs.appendChild(u); input.value = '';
@@ -209,14 +207,37 @@ router.use((req, res, next) => {
   next();
 });
 
-// 🎯 MAIN ROUTER ENTRY WITH BOTH MARKS AND DEFAULT ENGINE CAPABILITY
+// 🎯 MAIN ROUTER ENTRY (FIXED EXECUTION PRIORITY TIER)
 router.post("/api/chat-ai", async (req, res) => {
   try {
     const { question, history, portalRole } = req.body;
     const lowerQ = question.toLowerCase();
     const StudentModel = mongoose.model("Student");
 
-    // 1. Advanced Analytics Search Marks Logic
+    // ⭐ PRIORITY 1: TEACHER UPLOAD LOGIC (Pehle check hoga taaki search shabdon se intercept na ho)
+    const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload");
+    const hasAuthorizedPortalSession = portalRole === "Teacher" || portalRole === "Admin" || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
+
+    if (isTeacherIntendingUpload && hasAuthorizedPortalSession) {
+      const rollM = question.match(/roll:\s*([^\s,]+)/i);
+      const nameM = question.match(/name:\s*([^,]+)/i), dobM = question.match(/dob:\s*([^\s,]+)/i);
+      const jM = question.match(/java:\s*(\d+)/i), rM = question.match(/rprog:\s*(\d+)/i);
+      const oM = question.match(/os:\s*(\d+)/i), cM = question.match(/coa:\s*(\d+)/i), uM = question.match(/unix:\s*(\d+)/i);
+
+      if (!rollM || !nameM || !dobM) {
+        return res.status(200).json({ reply: "❌ Format Mismatch! Marks add karne ka correct design structure:\n\nAdd result roll: 12, name: Sumit, dob: 22/08/2005, java: 90, rprog: 85, os: 80, coa: 75, unix: 95" });
+      }
+
+      await StudentModel.findOneAndUpdate({ roll: rollM[1].trim() }, {
+        name: nameM[1].trim(), dob: dobM[1].trim(), uploadedAt: new Date(),
+        subjects: { java: jM?Number(jM[1]):0, rProg: rM?Number(rM[1]):0, os: oM?Number(oM[1]):0, coa: cM?Number(cM[1]):0, unixLinux: uM?Number(uM[1]):0 }
+      }, { upsert: true });
+
+      const executor = portalRole ? portalRole : "Staff Session";
+      return res.status(200).json({ reply: `✅ Session Verified (${executor})! Roll Number ${rollM[1].trim()} records are synchronized with Cloud Cluster database.` });
+    }
+
+    // 🔍 PRIORITY 2: ADVANCED ANALYTICS SEARCH MARKS LOGIC
     if (lowerQ.includes("roll") || lowerQ.includes("marks") || lowerQ.includes("result")) {
       const match = question.match(/\d+/);
       if (match) {
@@ -226,7 +247,6 @@ router.post("/api/chat-ai", async (req, res) => {
           const total = sub.java + sub.rProg + sub.os + sub.coa + sub.unixLinux;
           const pct = ((total / 500) * 100).toFixed(2);
           
-          // 📉 High-Performance Analytics Array Parsing Engine
           const subArray = [
             { name: "Java Programming", score: sub.java },
             { name: "R Programming", score: sub.rProg },
@@ -266,36 +286,12 @@ router.post("/api/chat-ai", async (req, res) => {
       }
     }
 
-    // 2. Intelligent Auto-Authenticated Teacher Upload Logic
-    const isTeacherIntendingUpload = lowerQ.includes("add") || lowerQ.includes("update") || lowerQ.includes("upload");
-    const hasAuthorizedPortalSession = portalRole === "Teacher" || portalRole === "Admin" || lowerQ.includes("pin: cse_teacher_2026") || lowerQ.includes("pin: admin_secure_2026");
-
-    if (isTeacherIntendingUpload && hasAuthorizedPortalSession) {
-      const rollM = question.match(/roll:\s*([^\s,]+)/i);
-      const nameM = question.match(/name:\s*([^,]+)/i), dobM = question.match(/dob:\s*([^\s,]+)/i);
-      const jM = question.match(/java:\s*(\d+)/i), rM = question.match(/rprog:\s*(\d+)/i);
-      const oM = question.match(/os:\s*(\d+)/i), cM = question.match(/coa:\s*(\d+)/i), uM = question.match(/unix:\s*(\d+)/i);
-
-      if (!rollM || !nameM || !dobM) {
-        return res.status(200).json({ reply: "❌ Format Mismatch! Marks add karne ka correct design structure:\n\nAdd result roll: 12, name: Sumit, dob: 22/08/2005, java: 90, rprog: 85, os: 80, coa: 75, unix: 95" });
-      }
-
-      await StudentModel.findOneAndUpdate({ roll: rollM[1].trim() }, {
-        name: nameM[1].trim(), dob: dobM[1].trim(), uploadedAt: new Date(),
-        subjects: { java: jM?Number(jM[1]):0, rProg: rM?Number(rM[1]):0, os: oM?Number(oM[1]):0, coa: cM?Number(cM[1]):0, unixLinux: uM?Number(uM[1]):0 }
-      }, { upsert: true });
-
-      const executor = portalRole ? portalRole : "Staff Session";
-      return res.status(200).json({ reply: `✅ Session Verified (${executor})! Roll Number ${rollM[1].trim()} records are synchronized with Cloud Cluster database.` });
-    }
-
-    // 3. Regular Assistant Talk Stack
+    // 🤖 PRIORITY 3: REGULAR ASSISTANT TALK STACK
     let messagePayload = [{ role: "system", content: "You are the SITM Campus AI Assistant. The current year is strictly 2026. Keep this alignment in mind. Guide portal users with high intelligence and extreme precision." }];
     if (history && Array.isArray(history)) {
       history.forEach(m => { if(m.role && m.content) messagePayload.push({ role: m.role, content: m.content }); });
     }
     
-    // Auto-Greeting adjustments for active staff login states
     if (history.length === 0 && (portalRole === "Teacher" || portalRole === "Admin")) {
       return res.status(200).json({ reply: `Welcome Professor! 🛡️ System detects active ${portalRole} credentials session. You can command me to search or upload results directly without entering secure authorization pins!` });
     }
@@ -319,4 +315,3 @@ router.post("/api/chat-ai", async (req, res) => {
 });
 
 module.exports = router;
-        
