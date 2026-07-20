@@ -493,7 +493,7 @@ router.post("/api/chat-ai", async (req, res) => {
     
     let messagePayload = [{ 
       role: "system", 
-      content: `You are AURA, a smart, interactive, and highly advanced AI Assistant built for students and teachers using this examination portal. 
+      content: `You are SUMIT, a smart, interactive, and highly advanced AI Assistant built for students and teachers using this examination portal. 
 
 Today's current live date and day is strictly ${currentServerDate}. Always answer date and day queries accurately using this provided timestamp. 
 
